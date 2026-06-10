@@ -4,15 +4,29 @@
 - Core Directive: Replace linear binary storage and computing with spatial, harmonic, and geometric data topologies based on the Golden Ratio (\(\phi \)).
 
 ---
-## Project Architecture
+## Project Architecture & Branch Topology
 
-Directory structure for **Project-GTOS** and folder descriptions:
+Project-GTOS enforces a strict, two-branch ecosystem designed to isolate stable system architecture from bleeding-edge theoretical sandboxes. 
 
-* **`core/`** — All necessary Operating System interface modules, CLI found at gtos_shell.py.
-* **`tests/`** — Holds unit/integration tests to assist and verify any automated/manual code changes.
-* **`benchmarks/`** — Performance tracking or validation scripts.
-* **`docs/`** — (will) House the library of GT-OS documentation, instruction, or configuration references and literature.
-* **`archive/`** — Legacy storage and temporary holding zone for old, deprecated scripts/references kept for historical context.
+---
+
+### 1. Main Production Branch (`branch: main`)
+The `main` branch represents the stable production-ready repository blueprint. It houses the foundational kernel layers, testing suites, and official project documentation.
+
+* **`core/`** — **The Engine Room.** Houses all necessary Operating System interface modules and system configurations. The primary CLI entry point is found here at `gtos_shell.py`.
+* **`tests/`** — **Quality Control.** Contains automated unit and integration tests to validate and verify code stability during system updates.
+* **`benchmarks/`** — **Performance Optimization.** Holds performance tracking metrics, latency stress-testing, and validation scripts to measure processing speed.
+* **`docs/`** — **Project Knowledge.** Houses the official library of GT-OS documentation, technical architecture literature, user manuals, and configuration references.
+* **`archive/`** — **Legacy Storage.** Acts as a temporary holding zone for deprecated scripts, historical iterations, and reference code kept for context.
+
+---
+
+### 2. Experimental Branch (`branch: experimental`)
+The `experimental` branch acts as a playground for theoretical research and structural prototyping. It mirrors the base folders of `main` to allow live-system integration testing, while introducing three dedicated research sandboxes:
+
+* **`project-arty/`** — **Theoretical Physics Engine.** The mathematical proving ground for the system. Contains code exploring the physics models, non-divergent matrix math, and Golden Ratio ($\phi$) calculations that the core kernel relies on.
+* **`project-gio/`** — **AI Token Metrics Prototype.** The machine learning integration layer. Houses the original prototypes where theoretical physics vectors were first melded with LLM token metrics, trajectory snapping logic, and hallucination detection algorithms.
+* **`toybox/`** — **The Playground.** A fun, unstructured sandbox for novel application of framework concepts and modules.
 
 ---
 
