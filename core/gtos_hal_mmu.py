@@ -1,18 +1,22 @@
+# core/gtos_hal_mmu.py
 import struct
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
+from gtos_register_map import GTOSRegisterMap
 
 class GTOSHardwareMMU:
     """
     GTOS Phase 5.1 Core: Hardware Abstraction Layer Memory Management Unit.
-    Simulates a physical hardware MMU, locking 24-byte serialized geometric 
-    coordinate seeds into fixed, contiguous memory block slots.
+    Simulates a physical hardware MMU, locking 24-byte serialized geometric coordinate seeds into fixed, contiguous memory block slots.
     """
     def __init__(self, total_pages: int = 256):
-        self.PAGE_SIZE_BYTES: int = 24  # Rigid GTOS coordinate seed footprint
-        self.TOTAL_PAGES: int = total_pages
+        self.PAGE_SIZE_BYTES: int = 24 # Rigid GTOS coordinate seed footprint
+        self.TOTAL_PAGES: int = total_pages # Simulated Physical RAM Matrix (Contiguous Byte Array)
         
         # Simulated Physical RAM Matrix (Contiguous Byte Array)
         self.physical_ram_bus: bytearray = bytearray(self.TOTAL_PAGES * self.PAGE_SIZE_BYTES)
+        
+        # Low-level hardware registry instance attachment
+        self.register_map: GTOSRegisterMap = GTOSRegisterMap()
         
         # Hardware Page Allocation Table: Maps Cell IDs to Physical Page Frames
         self.page_frame_registry: Dict[str, int] = {}
