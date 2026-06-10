@@ -1,7 +1,18 @@
-### Geometric Topology Operating System (GT-OS)
+## Geometric Topology Operating System (GT-OS)
 - Document Status: Founding Concept & Architecture Draft
 
 - Core Directive: Replace linear binary storage and computing with spatial, harmonic, and geometric data topologies based on the Golden Ratio (\(\phi \)).
+
+---
+## Project Architecture
+
+Directory structure for **Project-GTOS** and folder descriptions:
+
+* **`core/`** — All necessary Operating System interface modules, CLI found at gtos_shell.py.
+* **`tests/`** — Holds unit/integration tests to assist and verify any automated/manual code changes.
+* **`benchmarks/`** — Performance tracking or validation scripts.
+* **`docs/`** — (will) House the library of GT-OS documentation, instruction, or configuration references and literature.
+* **`archive/`** — Legacy storage and temporary holding zone for old, deprecated scripts/references kept for historical context.
 
 ---
 
