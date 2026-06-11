@@ -1,3 +1,4 @@
+# core/gtos_token_bridge.py
 import math
 import numpy as np
 from typing import Dict, Any, Tuple, List
@@ -18,19 +19,35 @@ class GTOSTokenBridge:
         return entropy, variance
 
     def intercept_and_route_token(self, token_str: str, raw_logits: np.ndarray) -> Dict[str, Any]:
-        entropy, variance = self.evaluate_token_entropy(raw_logits)
+        """
+        Phase 6.3 Concurrency Overhaul: Sanitizes raw logging matrices instantly 
+        at the ingestion gate to prevent numpy object type leakage into unpadded 
+        hardware register maps during parallel multi-engine workloads.
+        """
+        # Force immediate flattening of any incoming numpy structures into standard primitives
+        if hasattr(raw_logits, "tolist"):
+            sanitized_logits = np.array([float(x) for x in raw_logits.tolist()], dtype=np.float64)
+        else:
+            sanitized_logits = np.array([float(x) for x in raw_logits], dtype=np.float64)
+
+        entropy, variance = self.evaluate_token_entropy(sanitized_logits)
+        
+        # Enforce strict plain primitive conversions
+        entropy = float(entropy)
+        variance = float(variance)
+        
         self.entropy_history.append(entropy)
         self.variance_history.append(variance)
-        self.token_registry.append(token_str)
-        
+        self.token_registry.append(str(token_str))
+
         is_divergent = False
         kernel_intervention = "STREAM_PURE"
-        
+
         if len(self.entropy_history) > 1:
             if (self.entropy_history[-1] - self.entropy_history[-2]) > 1.5:
                 is_divergent = True
                 kernel_intervention = "ENTROPY_SPIKE"
-                
+
         if len(self.entropy_history) >= 6 and not is_divergent:
             early_entropy = np.mean(self.entropy_history[:3])
             late_entropy = np.mean(self.entropy_history[-3:])
@@ -50,12 +67,16 @@ class GTOSTokenBridge:
             z = -float(len(self.token_registry) * self.kernel.PHI_SIXTH_UNIT)
             coordinates = (x, y, z)
             domain = -1
-            
+
+        coord_x, coord_y, coord_z = coordinates
+
         return {
-            "token": token_str,
+            "token": str(token_str),
             "entropy": entropy,
             "variance": variance,
-            "assigned_coordinates": coordinates,
-            "manifold_domain": domain,
-            "status": kernel_intervention
+            "coord_x": float(coord_x),
+            "coord_y": float(coord_y),
+            "coord_z": float(coord_z),
+            "manifold_domain": int(domain),
+            "status": str(kernel_intervention)
         }
