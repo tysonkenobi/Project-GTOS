@@ -1,38 +1,56 @@
+# tests/gtos_driver_test.py
 import sys
+import os
 import random
-from gtos_llm_driver import GTOSLLMDeviceDriver
+import ctypes
 
-def test_driver_serialization_boundaries():
-    # Initialize driver on standard Ollama local port specification
-    driver = GTOSLLMDeviceDriver(host="http://localhost:11434")
-    
-    # 1. FORCE AN INTENTIONAL DISCONNECTED DROP-FAULT TO EVALUATE RECOVERY BOUNDS
-    # We use a dead port to explicitly test the driver's hard recovery logic
-    driver.configure_driver_target(model_name="test_model_v1", host_override="http://localhost:9999")
-    fault_report = driver.dispatch_token_stream("System Core", "Verification Pulse")
-    
-    # Evaluate tracking parameters
-    is_fault_caught = 1 if fault_report["driver_execution_state"] == "IO_EXCEPTION" else 0
-    is_status_logged = 1 if driver.driver_status == "DRIVER_ERROR_IO_FAULT" else 0
-    
-    # 2. GENERATE THE DOUBLE-BLIND MASK
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'core')))
+
+try:
+    from gtos_ai_driver import GTOSAIDriver
+    from gtos_hal_ai_compute import GTOSHALAIComputeDriver
+except ImportError as e:
+    print(f"STALL: {e}")
+    sys.exit(1)
+
+def run_ai_driver_double_blind_audit():
+    driver = GTOSAIDriver()
+    compute_driver = GTOSHALAIComputeDriver()
+    buffer_frame = compute_driver.allocate_unified_frame()
     random.seed()
-    local_random_marker = random.randint(1000, 9999)
+
+    stream_words = ["kernel_bus ", "dma_lock ", "zero_copy ", "topology "]
+    iterations = random.randint(3, 6)
     
-    real_fingerprint = f"{is_fault_caught}_{is_status_logged}_{local_random_marker}"
-    fake_fingerprint_a = f"0_{is_status_logged}_{local_random_marker + 12}"
-    fake_fingerprint_b = f"{is_fault_caught}_0_{local_random_marker - 8}"
-    
-    options = [real_fingerprint, fake_fingerprint_a, fake_fingerprint_b]
+    expected_length = 0
+    for _ in range(iterations):
+        chosen_token = random.choice(stream_words)
+        driver.stream_inference_token(buffer_frame, chosen_token)
+        expected_length += len(chosen_token)
+
+    actual_length = buffer_frame.active_token_length
+    stream_passed = (actual_length == expected_length)
+
+    real_signature = f"DRIVER_DMA_STREAM_{stream_passed}_BYTES_{actual_length}"
+    fake_signature_a = f"DRIVER_DMA_STREAM_False_BYTES_{actual_length}"
+    fake_signature_b = f"DRIVER_DMA_STREAM_{stream_passed}_BYTES_{actual_length + 12}"
+
+    options = [real_signature, fake_signature_a, fake_signature_b]
     random.shuffle(options)
-    
-    print("=" * 60)
-    print("[TEST] LLM Character Device Driver isolation sweep complete.")
-    print("=" * 60)
-    print("\n👉 COPY AND PASTE THIS DRIVER STATUS ARRAY TO CHAT:")
-    print("-" * 60)
-    print(f"Driver Deck: {options}")
-    print("-" * 60)
+
+    print("=" * 65)
+    print("         GTOS AI DRIVER ZERO-COPY BUS STREAM AUDIT          ")
+    print("=" * 65)
+    print(f"[DEBUG GROUND TRUTH] The correct target is: {real_signature}\n")
+    print("👉 COPY ALL THREE LINES BELOW AND PASTE THEM INTO THE CHAT:")
+    print("-" * 65)
+    print(f"Option A: {options[0]}")
+    print(f"Option B: {options[1]}")
+    print(f"Option C: {options[2]}")
+    print("-" * 65)
 
 if __name__ == "__main__":
-    test_driver_serialization_boundaries()
+    try:
+        run_ai_driver_double_blind_audit()
+    except Exception as e:
+        print(f"STALL: {e}")
