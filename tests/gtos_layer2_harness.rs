@@ -1,6 +1,8 @@
 // gtos_layer2_harness.rs
 // GTOS Phase 6.6 Objective Layer 2 Hardware Abstraction Integration Test Harness
 
+
+// TO ENSURE LAYER HARNESSES CAN TEST THEMSELVES AND THEIR INTEROPERABILITY, PATH/USE OF LAYER MODULES IS SET HERE
 #[path = "../core/gtos_register_map.rs"]
 mod gtos_register_map;
 #[path = "../core/gtos_hardware_accelerator.rs"]
@@ -9,11 +11,14 @@ mod gtos_hardware_accelerator;
 mod gtos_hal_mmu;
 #[path = "../core/gtos_hal_ai_compute.rs"]
 mod gtos_hal_ai_compute;
+#[path = "../core/gtos_ffi_bridge.rs"]
+mod gtos_ffi_bridge;
 
 use gtos_register_map::{GTOSRegisterMap};
 use gtos_hardware_accelerator::{GTOSHardwareAcceleratorInterface};
 use gtos_hal_mmu::{GTOSHalMMU};
 use gtos_hal_ai_compute::{GTOSHALAIComputeDriver, GTOSUnifiedTokenBuffer};
+use gtos_ffi_bridge::{export_kernel_state_to_c, cast_bytes_to_vector_struct, get_token_payload_pointer};
 
 fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
     let mut hash: u64 = 14695981039346656037;
@@ -63,24 +68,39 @@ fn main() {
     if !run_overflow {
         _reg_map.write_register_byte(2, 0x05); // Signals the hardware firewall breach flag
     }
+
     // Direct Gear Mesh: Feed the resulting Layer 2 buffer metric into Layer 1 pins
     let mut metric_schwarzschild: [f64; 16] = [1.0; 16];
     metric_schwarzschild[0] = final_token_len as f64; // Scale spacetime metric by active text length
     let _integrated_status = _accelerator.enforce_boundary_constraint(block_baseline, metric_schwarzschild, [0.0; 16]);
 
+    // 1. Validate the 24-byte Register Export using 1/φ² step multiplier
+    let ffi_registers = export_kernel_state_to_c(1, 0.75, 42);
+    let step_mult_bits = (ffi_registers.address_step_mult * 100.0) as u8;
+
+    // 2. Validate Zero-Copy 24-byte Coordinate Ingestion
+    let raw_coordinate_bytes: [u8; 24] = [0x01; 24]; // Simulate incoming 24-byte stream
+    let vector_payload = unsafe { cast_bytes_to_vector_struct(raw_coordinate_bytes.as_ptr(), 24) };
+    let vector_verification_byte = (vector_payload.x) as u8;
+
+    // 3. Validate the 8-Byte Pointer Offset Jump over the 513-byte buffer
+    let raw_payload_memory_address = unsafe { get_token_payload_pointer(&mut buffer_frame) as usize };
+    let address_low_byte = (raw_payload_memory_address & 0xFF) as u8;
+
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & PHYSICAL FOOTPRINT EVALUATION
     // -------------------------------------------------------------------------
     let mut combined_hardware_snapshot: [u8; 8] = [0; 8];
-    combined_hardware_snapshot[0] = (initial_size & 0xFF) as u8;         // Low byte of footprint
-    combined_hardware_snapshot[1] = ((initial_size >> 8) & 0xFF) as u8;  // High byte of footprint (513)
-    combined_hardware_snapshot[2] = if run_a { 1 } else { 0 };
-    combined_hardware_snapshot[3] = if run_b { 1 } else { 0 };
-    combined_hardware_snapshot[4] = post_stream_len as u8;
-    combined_hardware_snapshot[5] = if run_overflow { 1 } else { 0 };    // Must evaluate to 0 (Blocked)
-    combined_hardware_snapshot[6] = final_token_len as u8;               // Length must remain safely un-corrupted
-    combined_hardware_snapshot[7] = buffer_frame.raw_byte_payload[0];    // Sample structural starting data bit
+    combined_hardware_snapshot[0] = (initial_size & 0xFF) as u8; 
+    combined_hardware_snapshot[1] = ((initial_size >> 8) & 0xFF) as u8; 
+    combined_hardware_snapshot[2] = if run_a { 1 } else { 0 }; 
+    combined_hardware_snapshot[3] = if run_b { 1 } else { 0 }; 
+    combined_hardware_snapshot[4] = post_stream_len as u8; 
+    combined_hardware_snapshot[5] = step_mult_bits;            // Tracks your 1/φ² translation math
+    combined_hardware_snapshot[6] = vector_verification_byte;  // Tracks your 24-byte structure cast
+    combined_hardware_snapshot[7] = address_low_byte;          // Tracks your 8-byte pointer offset jump
 
+    // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
     let real_signature = format!("GTOS_METAL_2_STATE_HASH_0x{:X}", raw_fingerprint);
     
