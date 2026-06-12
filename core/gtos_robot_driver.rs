@@ -54,7 +54,7 @@ impl GTOSRobotTelemetryDriver {
             
             return GTOSRobotDriverState {
                 brake_flag: brake_state as u8,
-                processed_motor_steps:,
+                processed_motor_steps: [0i32; 3],
                 kinetic_load_factor: 0xFFFF, // Signals max resistance/brake load flag
             };
         }

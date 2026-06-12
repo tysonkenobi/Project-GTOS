@@ -1,5 +1,5 @@
 // gtos_layer4_harness.rs
-// GTOS Phase 7.1 Objective Layer 4 Semantic Bridge Integration Test Rig
+// GTOS Phase 7.2 Objective Layer 4 Robot Driver Integration Test Rig
 
 #[path = "../core/gtos_register_map.rs"]
 mod gtos_register_map;
@@ -15,15 +15,18 @@ mod gtos_ffi_bridge;
 mod gtos_void_compressor;
 #[path = "../core/gtos_kernel_main.rs"]       
 mod gtos_kernel_main;
-#[path = "../core/gtos_token_bridge.rs"]      // Phase 7 Module Integrated
+#[path = "../core/gtos_token_bridge.rs"]      
 mod gtos_token_bridge;
+#[path = "../core/gtos_robot_driver.rs"]      // Robot Driver Integrated
+mod gtos_robot_driver;
 
 use gtos_register_map::{GTOSRegisterMap, ManifoldSpinState};
 use gtos_hardware_accelerator::{GTOSHardwareAcceleratorInterface};
 use gtos_hal_mmu::{GTOSHalMMU};
 use gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
 use gtos_kernel_main::{GTOSKernelCoreExecutive};
-use gtos_token_bridge::{GTOSSemanticTokenBridge, BridgeStatus};
+use gtos_token_bridge::{GTOSSemanticTokenBridge};
+use gtos_robot_driver::{GTOSRobotTelemetryDriver};
 
 fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
     let mut hash: u64 = 14695981039346656037;
@@ -36,27 +39,29 @@ fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
 
 fn main() {
     // -------------------------------------------------------------------------
-    // 1. UNIFIED SYSTEM INITIALIZATION (LAYERS 1 THROUGH 4)
+    // 1. UNIFIED SYSTEM INITIALIZATION (LAYERS 1 THROUGH 4 COMPLETE)
     // -------------------------------------------------------------------------
     let mut reg_map = GTOSRegisterMap::new();
-    let accelerator = GTOSHardwareAcceleratorInterface::new();
-    let mut mmu = GTOSHalMMU::new();
+    let _accelerator = GTOSHardwareAcceleratorInterface::new();
+    let _mmu = GTOSHalMMU::new();
     let compute_driver = GTOSHALAIComputeDriver::new();
-    let mut executive = GTOSKernelCoreExecutive::new(0.10);
+    let _executive = GTOSKernelCoreExecutive::new(0.10);
     let mut buffer_frame = compute_driver.allocate_unified_frame();
     
-    // Instantiate the Phase 7 Layer 4 Semantic Bridge
     let token_bridge = GTOSSemanticTokenBridge::new();
+    let robot_driver = GTOSRobotTelemetryDriver::new();
+
+    // Establish stable historical baseline motor steps (X, Y, Z coordinates)
+    let previous_motor_steps: [i32; 3] = [5_000, -2_500, 10_000];
 
     // -------------------------------------------------------------------------
-    // 2. TEST VECTOR 1: NOMINAL WAVE CONTINUUM PASS (STREAM PURE)
+    // 2. TEST VECTOR 1: NOMINAL PIPELINE MESH (STREAM PURE & SHOCK SMOOTHING)
     // -------------------------------------------------------------------------
     let nominal_token = b"manifold_alignment_stable";
     let _stream_ok = compute_driver.stream_token_to_hardware(&mut buffer_frame, nominal_token);
 
-    // Mock an orderly, low-entropy ring buffer history (scaled 1,000,000)
     let safe_entropy_history: [i32; 6] = [200_000, 210_000, 205_000, 220_000, 215_000, 225_000];
-    let current_entropy_nominal = 230_000; // Minimal delta step variation
+    let current_entropy_nominal = 230_000; 
     let current_variance_nominal = 15_000;
 
     let bridge_state_nominal = token_bridge.intercept_and_route_token(
@@ -66,11 +71,18 @@ fn main() {
         current_variance_nominal
     );
 
+    // Nominally map abstract bridge coordinates through the 1/phi^3 motor shock absorber
+    let nominal_bridge_coords = [42_000, -12_000, 85_000];
+    let robot_state_nominal = robot_driver.process_telemetry_gear_mesh(
+        bridge_state_nominal.acoustic_coupler_link,
+        nominal_bridge_coords,
+        &previous_motor_steps
+    );
+
     // -------------------------------------------------------------------------
-    // 3. TEST VECTOR 2: COGNITIVE DIVERGENCE EVENT (ENTROPY SPIKE TRAP)
+    // 3. TEST VECTOR 2: ANOMALY BRAKE TRAP (LINK EXPLOSION RESPONSE)
     // -------------------------------------------------------------------------
-    // Simulate an abrupt runaway entropy blast (> 1.5 delta) to verify the trap
-    let spiked_entropy = 1_800_000; 
+    let spiked_entropy = 1_800_000; // Runaway entropy blast
     let current_variance_spike = 950_000;
 
     let bridge_state_spike = token_bridge.intercept_and_route_token(
@@ -82,41 +94,44 @@ fn main() {
 
     let mut anomaly_coords = [0i32; 3];
     
-    // If the 1-byte phase velocity link collapses, lock the continuum trajectory
+    // Evaluate the Robot Driver's reaction to a broken 1-byte link line
+    let robot_state_spike = robot_driver.process_telemetry_gear_mesh(
+        bridge_state_spike.acoustic_coupler_link,
+        nominal_bridge_coords, // Attempts to feed the same coordinates
+        &previous_motor_steps
+    );
+
     if bridge_state_spike.acoustic_coupler_link == 0x00 {
-        // Force the bridge to generate native fixed-point remapping coordinates
         anomaly_coords = token_bridge.calculate_anomaly_coordinates(42);
         
-        // Mesh gears straight into Layer 1 registers to signal a Boundary Inversion
         reg_map.trigger_boundary_redirection(
             ManifoldSpinState::BoundaryInversion, 
-            anomaly_coords[0] as f64 // Feed calculated X fixed-point scalar into register drift mapping
+            anomaly_coords[0] as f64 
         );
     }
 
     // -------------------------------------------------------------------------
-    // 4. METRIC STATE EXTRACTION & CRITICAL HARDWARE SNAPSHOT
+    // 4. METRIC STATE EXTRACTION & MECHANICAL SNAPSHOT
     // -------------------------------------------------------------------------
-    let ifr_byte = reg_map.read_register_byte(2); // Reads REG_IFR_FLAGS to confirm L1 trap engagement
+    let ifr_byte = reg_map.read_register_byte(2); 
     
     let mut combined_hardware_snapshot: [u8; 8] = [0; 8];
-    combined_hardware_snapshot[0] = bridge_state_nominal.acoustic_coupler_link; // Tracks nominal coupler lock (0x01)
-    combined_hardware_snapshot[1] = bridge_state_nominal.intervention_status;    // Tracks StreamPure state (0x00)
-    combined_hardware_snapshot[2] = bridge_state_spike.acoustic_coupler_link;   // Tracks broken link status (0x00)
-    combined_hardware_snapshot[3] = bridge_state_spike.intervention_status;     // Tracks EntropySpike flag (0xFD)
-    combined_hardware_snapshot[4] = ifr_byte;                                   // Tracks Layer 1 Hardware Flag interaction
-    combined_hardware_snapshot[5] = (anomaly_coords[0] & 0xFF) as u8;           // Tracks fixed-point X coordinate byte
-    combined_hardware_snapshot[6] = (anomaly_coords[2] & 0xFF) as u8;           // Tracks fixed-point Z coordinate channel
-    combined_hardware_snapshot[7] = buffer_frame.active_token_length as u8;      // Tracks verified spatial buffer depth
+    combined_hardware_snapshot[0] = bridge_state_nominal.acoustic_coupler_link; // Nominal lock byte (0x01)
+    combined_hardware_snapshot[1] = robot_state_nominal.brake_flag;           // Nominal brake byte (0x00)
+    combined_hardware_snapshot[2] = bridge_state_spike.acoustic_coupler_link;   // Broken lock byte (0x00)
+    combined_hardware_snapshot[3] = robot_state_spike.brake_flag;             // Engaged brake byte (0xFF)
+    combined_hardware_snapshot[4] = ifr_byte;                                   // Register interrupt state flag
+    combined_hardware_snapshot[5] = (robot_state_nominal.processed_motor_steps[0] & 0xFF) as u8; // X axis step validation
+    combined_hardware_snapshot[6] = (robot_state_spike.kinetic_load_factor & 0xFF) as u8;       // Brake load factor tracking
+    combined_hardware_snapshot[7] = buffer_frame.active_token_length as u8;      // Capacity firewall depth check
 
-    // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
     let real_signature = format!("GTOS_METAL_4_STATE_HASH_0x{:X}", raw_fingerprint);
     
     let fake_signature_a = format!("GTOS_METAL_4_STATE_HASH_0x{:X}", raw_fingerprint.wrapping_add(0xDEADBEEF));
     let fake_signature_b = format!("GTOS_METAL_4_STATE_HASH_0x{:X}", raw_fingerprint ^ 0x123456789ABCDEF);
 
-    // -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
     // 5. NON-DETERMINISTIC CLOCK SCRAMBLE PRESENTATION
     // -------------------------------------------------------------------------
     let system_clock_nanos = std::time::SystemTime::now()
@@ -130,6 +145,7 @@ fn main() {
     if (system_clock_nanos & 0x02) == 2 { options.swap(1, 2); }
     if (system_clock_nanos & 0x04) == 4 { options.swap(0, 2); }
 
+    // RESTORED: Explicit index mapping logic to track the random clock shifts
     let correct_letter = if options[0] == real_signature {
         "Option A"
     } else if options[1] == real_signature {
@@ -146,8 +162,9 @@ fn main() {
     println!("=================================================================");
     println!("[STATUS] Multi-layer pipeline state vector matrix unified.");
     println!("[STATUS] Acoustic Coupler Phase Velocity trend tracking active.");
-    println!("[STATUS] Fixed-Point Non-Divergent Anomaly Trajectory locked.");
+    println!("[STATUS] Robot Driver 1/phi^3 kinetic telemetry shock mesh live.");
     
+    // RESTORED: Direct visibility of the uncompromised target hash
     println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
     println!("   Verified Hardware Hash Token: {}\n", real_signature);
 
