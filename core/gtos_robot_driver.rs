@@ -18,6 +18,10 @@ pub struct GTOSRobotDriverState {
     pub kinetic_load_factor: u16,         // Scaled systemic load footprint
 }
 
+// Static compile-time verification guards to prevent memory layout breaches
+const _: () = assert!(core::mem::size_of::<GTOSRobotDriverState>() == 15);
+const _: () = assert!(core::mem::align_of::<GTOSRobotDriverState>() == 1);
+
 pub struct GTOSRobotTelemetryDriver {
     pub motor_channel_count: usize,
 }

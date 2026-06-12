@@ -45,7 +45,7 @@ fn main() {
     let _accelerator = GTOSHardwareAcceleratorInterface::new();
     let _mmu = GTOSHalMMU::new();
     let compute_driver = GTOSHALAIComputeDriver::new();
-    let _executive = GTOSKernelCoreExecutive::new(0.10);
+    let _executive = GTOSKernelCoreExecutive::new(100_000);
     let mut buffer_frame = compute_driver.allocate_unified_frame();
     
     let token_bridge = GTOSSemanticTokenBridge::new();
@@ -106,9 +106,21 @@ fn main() {
         
         reg_map.trigger_boundary_redirection(
             ManifoldSpinState::BoundaryInversion, 
-            anomaly_coords[0] as f64 
+            anomaly_coords[0] as i64 
         );
     }
+
+    // -------------------------------------------------------------------------
+    // VALIDATION MATRIX: Track structural sizes and safety trap engagement
+    // -------------------------------------------------------------------------
+    // True if your semantic token bridge state evaluates to exactly 12 bytes
+    let is_bridge_size_valid = core::mem::size_of::<gtos_token_bridge::GTOSTokenBridgeState>() == 12;
+
+    // True if your robot actuator telemetry state matches its rigid 15-byte layout
+    let is_driver_size_valid = core::mem::size_of::<gtos_robot_driver::GTOSRobotDriverState>() == 15;
+
+    // True if cutting the 1-byte link successfully forced the driver into an acoustic emergency brake state
+    let is_brake_trap_secured = robot_state_spike.brake_flag == 0xFF && robot_state_spike.kinetic_load_factor == 0xFFFF;
 
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & MECHANICAL SNAPSHOT
@@ -160,10 +172,19 @@ fn main() {
     println!("=================================================================");
     println!("       GTOS METAL-NATIVE LAYER 4 OBJECTIVE ARCHITECTURE TEST     ");
     println!("=================================================================");
-    println!("[STATUS] Multi-layer pipeline state vector matrix unified.");
-    println!("[STATUS] Acoustic Coupler Phase Velocity trend tracking active.");
-    println!("[STATUS] Robot Driver 1/phi^3 kinetic telemetry shock mesh live.");
-    
+    println!(
+        "[CHECKING] 12-Byte Semantic Token Bridge layout:         {}", 
+        if is_bridge_size_valid { "PASS (Lucas Invariant Secure)" } else { "FAIL (Layout Padding Leak)" }
+    );
+    println!(
+        "[CHECKING] 15-Byte General Actuator Driver state:        {}", 
+        if is_driver_size_valid { "PASS (3-Axis Vector Packed)" } else { "FAIL (Structural Bleed)" }
+    );
+    println!(
+        "[CHECKING] Acoustic Coupler Link Emergency Brake Trap:   {}", 
+        if is_brake_trap_secured { "PASS (Actuator Voltage Safe-State)" } else { "FAIL (Firewall Bypassed)" }
+    );
+
     // RESTORED: Direct visibility of the uncompromised target hash
     println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
     println!("   Verified Hardware Hash Token: {}\n", real_signature);

@@ -23,6 +23,10 @@ pub struct GTOSTokenBridgeState {
     pub last_variance_fixed: i32,         // Fixed-point (scale 1,000,000)
 }
 
+    // Static compile-time verification guards to secure the 12-byte boundary lane
+    const _: () = assert!(core::mem::size_of::<GTOSTokenBridgeState>() == 12);
+    const _: () = assert!(core::mem::align_of::<GTOSTokenBridgeState>() == 1);
+
 pub struct GTOSSemanticTokenBridge {
     pub buffer_capacity: usize,
 }
@@ -32,11 +36,11 @@ impl GTOSSemanticTokenBridge {
     pub const DELTA_THRESHOLD_FIXED: i32 = 1_500_000;
     
     // Fixed point representation constants scaled up by 1,000,000
-    pub const PHI_FIXED: i64 = 1_618034;
-    pub const PHI_SIXTH_FIXED: i64 = 254164; // (1/6phi^3) invariant component
+    pub const PHI_FIXED: i64 = 1_618_034;
+    pub const PHI_SIXTH_FIXED: i64 = 254_164; // (1/6phi^3) invariant component
 
     pub const fn new() -> Self {
-        Self { buffer_capacity: 513 }
+        Self { buffer_capacity: 521 }
     }
 
     /// Evaluates sequential token trends safely inside stack-allocated ring arrays
