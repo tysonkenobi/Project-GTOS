@@ -76,7 +76,7 @@ impl GTOSSemanticTokenBridge {
         GTOSTokenBridgeState {
             acoustic_coupler_link: coupler_flag,
             intervention_status: status as u8,
-            reserved_alignment:,
+            reserved_alignment: [0u8; 2],
             last_entropy_fixed: current_entropy,
             last_variance_fixed: current_variance,
         }
