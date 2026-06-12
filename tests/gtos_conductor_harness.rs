@@ -1,28 +1,7 @@
 // tests/gtos_conductor_harness.rs
 // GTOS Phase 8.2 Monolithic Master Conductor Execution & Integration Test Harness
 
-#[path = "../core/gtos_register_map.rs"]
-mod gtos_register_map;
-#[path = "../core/gtos_hardware_accelerator.rs"]
-mod gtos_hardware_accelerator;
-#[path = "../core/gtos_hal_mmu.rs"]
-mod gtos_hal_mmu;
-#[path = "../core/gtos_hal_ai_compute.rs"]
-mod gtos_hal_ai_compute;
-#[path = "../core/gtos_ffi_bridge.rs"]
-mod gtos_ffi_bridge;
-#[path = "../core/gtos_void_compressor.rs"]
-mod gtos_void_compressor;
-#[path = "../core/gtos_kernel_main.rs"]
-mod gtos_kernel_main;
-#[path = "../core/gtos_token_bridge.rs"]
-mod gtos_token_bridge;
-#[path = "../core/gtos_robot_driver.rs"]
-mod gtos_robot_driver;
-#[path = "../core/gtos_conductor.rs"]
-mod gtos_conductor;
-
-use gtos_conductor::GTOSMonolithicHarness;
+use gtos_core::gtos_conductor::GTOSMonolithicHarness;
 
 fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
     let mut hash: u64 = 14695981039346656037;
@@ -67,7 +46,7 @@ fn main() {
     combined_hardware_snapshot[1] = conductor.executive.memory_controller.allocation_counter as u8;
     combined_hardware_snapshot[2] = (conductor.executive.memory_controller.system_load & 0xFF) as u8;
     combined_hardware_snapshot[3] = conductor.reg_map.read_register_byte(2); 
-    combined_hardware_snapshot[4] = core::mem::size_of::<gtos_conductor::GTOSMonolithicHarness>() as u8;
+    combined_hardware_snapshot[4] = core::mem::size_of::<GTOSMonolithicHarness>() as u8;
     combined_hardware_snapshot[5] = 0xAA; // Unified status execution baseline token
     combined_hardware_snapshot[6] = 0x5B; // Layer alignment barrier check flag
     combined_hardware_snapshot[7] = 0x70; // Fixed-point verification mask
