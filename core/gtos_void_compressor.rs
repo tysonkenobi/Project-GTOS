@@ -44,3 +44,4 @@ impl GTOSVoidCompressor {
         // Returns your rigid, 24-byte FFI-compatible spatial tracking vector
         GTOSCoordinatePayload { x, y, z }
         }
+}

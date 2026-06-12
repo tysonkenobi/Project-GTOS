@@ -73,12 +73,24 @@ fn main() {
     let _time = mmu_mut.calculate_geometric_time_delta(1);
     let _pos_spin = ManifoldSpinState::PositiveInComplex;
     let _neg_spin = ManifoldSpinState::NegativeInComplex;
-    
+
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & PHYSICAL FOOTPRINT EVALUATION
     // -------------------------------------------------------------------------
     let ifr_byte = reg_map.read_register_byte(GTOSRegisterMap::REG_IFR_FLAGS);
     let size_bytes = accelerator.register_footprint_bytes;
+
+    // -------------------------------------------------------------------------
+    // VALIDATION MATRIX: Track structural footprint and boundary invariants
+    // -------------------------------------------------------------------------
+    // True if the compiled control block matches your rigid 11-byte Lucas footprint
+    let is_block_size_valid = size_bytes == 11;
+
+    // True if the Planck surge successfully engaged the hardware containment lock
+    let is_surge_trapped = status_surge == AccelStatus::BoundaryEquilibriumReached;
+
+    // True if the MMU correctly tripped the IFR flag register to indicate redirection
+    let is_firewall_secure = ifr_byte == 0x03;
 
     // Expanded 8-byte array tracking for Layer 1 architectural metrics out in the open
     let mut combined_hardware_snapshot: [u8; 8] = [0; 8];
@@ -134,11 +146,21 @@ fn main() {
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
     println!("=================================================================");
-    println!("       GTOS METAL-NATIVE LAYER 1 OBJECTIVE ARCHITECTURE TEST     ");
+    println!("         GTOS METAL-NATIVE LAYER 1 OBJECTIVE ARCHITECTURE TEST   ");
     println!("=================================================================");
-    println!("[STATUS] Minkowski Symmetrical Vacuum tensor fields active.");
-    println!("[STATUS] Arrow Operator Planck Limit tracking validated.");
-    println!("[STATUS] 18-Byte packed hardware register constraints secure.");
+    println!(
+        "[CHECKING] Minkowski Symmetrical Vacuum fields:            {}",
+        if is_surge_trapped { "PASS (Equilibrium Trapped)" } else { "FAIL (Divergence Unchecked)" }
+    );
+    println!(
+        "[CHECKING] Arrow Operator Planck Limit Tracking:          {}",
+        if is_firewall_secure { "PASS (Redirection Engaged)" } else { "FAIL (Firewall Bypassed)" }
+    );
+    println!(
+        "[CHECKING] 11-Byte packed hardware register constraints:  {}",
+        if is_block_size_valid { "PASS (11-Byte Lucas Aligned)" } else { "FAIL (Layout Padding Leak)" }
+    );
+
     
     // Your clear visible anchor to run the verification and test for AI drift
     println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);

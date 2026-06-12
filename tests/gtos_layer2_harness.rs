@@ -146,12 +146,12 @@ fn main() {
     println!("=================================================================");
     
     println!(
-        "[STATUS] 517-Byte geometric harmonic buffer allocation: {}", 
+        "[CHECKING] 517-Byte geometric harmonic buffer allocation: {}", 
         if is_buffer_size_valid { "PASS (Valid)" } else { "FAIL (Layout Corrupted)" }
     );
-    println!("[STATUS] Native pointer offset DMA streaming lanes active.");
+    println!("[NOT PRESENT] Native pointer offset DMA streaming lanes active.");
     println!(
-        "[STATUS] 509-Byte strict boundary capacity firewall:    {}", 
+        "[CHECKING] 509-Byte strict boundary capacity firewall:    {}", 
         if is_firewall_secure { "PASS (Secure)" } else { "FAIL (Exploited)" }
     );
     

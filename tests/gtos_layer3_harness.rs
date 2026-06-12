@@ -75,6 +75,15 @@ fn main() {
 
     let final_manifold_domain = executive.memory_controller.active_manifold_state as i32;
     let final_load = executive.memory_controller.system_load;
+    
+    // -------------------------------------------------------------------------
+    // VALIDATION MATRIX: Track structural footprint and calculation integrity
+    // -------------------------------------------------------------------------
+    // True if your 24-byte compression routine generated non-zero location values
+    let is_compression_valid = coordinate_result.x != 0 && coordinate_result.y != 0;
+    
+    // True if your stack allocation node tracks exactly to its rigid 36-byte metric
+    let is_node_seed_valid = core::mem::size_of::<gtos_kernel_main::GTOSFileNodeSeed>() == 36;
 
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & PHYSICAL FOOTPRINT EVALUATION
@@ -85,7 +94,7 @@ fn main() {
     combined_hardware_snapshot[2] = (coordinate_result.z.abs() as u8) % 255;
     combined_hardware_snapshot[3] = buffer_frame.active_token_length as u8;
     combined_hardware_snapshot[4] = final_manifold_domain as u8;
-    combined_hardware_snapshot[5] = (final_load * 100000.0) as u8;
+    combined_hardware_snapshot[5] = (final_load.saturating_mul(100_000) & 0xFF) as u8;
     combined_hardware_snapshot[6] = compute_status as u8;
     combined_hardware_snapshot[7] = executive.memory_controller.allocation_counter as u8;
 
@@ -122,11 +131,18 @@ fn main() {
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
     println!("=================================================================");
-    println!("       GTOS METAL-NATIVE LAYER 3 OBJECTIVE ARCHITECTURE TEST     ");
+    println!("        GTOS METAL-NATIVE LAYER 3 OBJECTIVE ARCHITECTURE TEST    ");
     println!("=================================================================");
-    println!("[STATUS] Multi-layer pipeline initialization unified.");
-    println!("[STATUS] Logarithmic File Node vector encoding verified.");
-    println!("[STATUS] Geometric Phase Inversion executive scheduling active.");
+    println!("[CHECKING] Multi-layer pipeline initialization unified.");
+    println!(
+        "[CHECKING] Logarithmic File Node vector encoding:         {}", 
+        if is_compression_valid { "PASS (24-Byte Vector Generated)" } else { "FAIL (Compression Diverged)" }
+    );
+    
+    println!(
+        "[CHECKING] Geometric Phase Inversion scheduling metrics:   {}", 
+        if is_node_seed_valid { "PASS (36-Byte Core Seed Aligned)" } else { "FAIL (Layout Padding Leak)" }
+    );
     
     println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
     println!("   Verified Hardware Hash Token: {}\n", real_signature);

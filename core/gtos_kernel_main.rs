@@ -45,7 +45,7 @@ pub struct GTOSKernelCoreExecutive {
 }
 
 impl GTOSKernelMemoryController {
-    pub const PHI: i64 = 1_618_034
+    pub const PHI: i64 = 1_618_034;
 
     pub const fn new(boundary_threshold: i64) -> Self {
         Self {
@@ -91,8 +91,8 @@ impl GTOSKernelCoreExecutive {
         packed_seed
     }
 
-    /// Core API: Real-Time AI Token Offloading Line. Receives the 513-byte unfragmented text buffer,
-    /// checks spatial drift parameters, and offloads metrics directly to your 19-byte accelerator registers.
+    /// Core API: Real-Time AI Token Offloading Line. Receives the 517-byte unfragmented text buffer,
+    /// checks spatial drift parameters, and offloads metrics directly to your 11-byte accelerator registers.
     pub unsafe fn system_ingest_token(
         &mut self,
         accelerator: &GTOSHardwareAcceleratorInterface,
