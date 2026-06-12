@@ -12,29 +12,29 @@ use crate::gtos_hal_ai_compute::{GTOSUnifiedTokenBuffer};
 #[derive(Debug, Clone, Copy)]
 pub struct GTOSHardwareRegisters {
     pub active_manifold: i32,     // 4 bytes
-    pub system_load: f64,         // 8 bytes
+    pub system_load: i64,         // 8 bytes
     pub allocation_counter: u32,  // 4 bytes
-    pub address_step_mult: f64,   // 8 bytes
+    pub address_step_mult: i64,   // 8 bytes
 } // Total: 4 + 8 + 4 + 8 = 24 bytes precisely
 
 /// Rigid 24-byte coordinate vector layout tracking physical spatiotemporal tracks.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct GTOSCoordinatePayload {
-    pub x: f64, // 8 bytes
-    pub y: f64, // 8 bytes
-    pub z: f64, // 8 bytes
+    pub x: i64, // 8 bytes
+    pub y: i64, // 8 bytes
+    pub z: i64, // 8 bytes
 } // Total: 8 + 8 + 8 = 24 bytes precisely
 
 pub struct GTOSFFIBridge;
 
 impl GTOSFFIBridge {
     /// Golden Ratio Constant (\phi = 1.6180339887...)
-    pub const PHI: f64 = 1.618033988749895;
+    pub const PHI: i32 = 1_618_034;
     
     /// Address step scaling factor tracking the inverse square: 1 / (\phi^2)
     /// This establishes your non-linear geometric compression step interval.
-    pub const STEP_MULT: f64 = 1.0 / (Self::PHI * Self::PHI);
+    pub const STEP_MULT: i32 = 381_966;
 }
 
 // -------------------------------------------------------------------------
@@ -45,14 +45,14 @@ impl GTOSFFIBridge {
 #[no_mangle]
 pub extern "C" fn export_kernel_state_to_c(
     manifold: i32, 
-    load: f64, 
+    load: i64, 
     counter: u32
 ) -> GTOSHardwareRegisters {
     GTOSHardwareRegisters {
         active_manifold: manifold,
         system_load: load,
         allocation_counter: counter,
-        address_step_mult: GTOSFFIBridge::STEP_MULT,
+        address_step_mult: GTOSFFIBridge::STEP_MULT as i64,
     }
 }
 
@@ -65,7 +65,7 @@ pub unsafe extern "C" fn cast_bytes_to_vector_struct(
 ) -> GTOSCoordinatePayload {
     // Rigid safety assertion guard: input memory chunk size must match the 24-byte blueprint exactly
     if byte_len != 24 || raw_bytes_ptr.is_null() {
-        return GTOSCoordinatePayload { x: 0.0, y: 0.0, z: 0.0 }; // Absolute fail-safe null return
+        return GTOSCoordinatePayload { x: 0, y: 0, z: 0 }; // Absolute fail-safe null return
     }
 
     // Cast the raw memory address pointer directly to the coordinate payload structure format

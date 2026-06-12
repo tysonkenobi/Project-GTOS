@@ -44,11 +44,11 @@ impl GTOSRegisterMap {
         self.register_byte_array[offset]
     }
 
-    pub fn trigger_boundary_redirection(&mut self, state: ManifoldSpinState, drift: f64) -> u32 {
+    pub fn trigger_boundary_redirection(&mut self, state: ManifoldSpinState, drift: i64) -> u32 {
         match state {
             ManifoldSpinState::BoundaryInversion => {
                 self.write_register_byte(Self::REG_IFR_FLAGS, 0x03);
-                let trunc = (drift.abs() as u64 & 0xFF) as u8;
+                let trunc = ((if drift < 0 { -drift } else { drift }) as u64 & 0xFF) as u8;
                 self.write_register_byte(Self::REG_FVR_VAL, trunc);
                 Self::VECTOR_BOUNDARY_REDIRECTION
             }

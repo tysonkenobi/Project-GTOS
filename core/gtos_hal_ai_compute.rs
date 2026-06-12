@@ -1,36 +1,39 @@
 // core/gtos_hal_ai_compute.rs
 // GTOS Layer 2: Metal-Native HAL AI Compute Driver
-// Enforces 513-byte harmonic unified token buffering with zero padding overhead
+// Enforces 521-byte Lucas harmonic unified token buffering with zero padding overhead
 
 #![no_std]
 
-/// Rigid 513-byte contiguous memory tracking space for raw token text streams.
+/// Rigid contiguous memory tracking space for raw token text streams.
 /// Enforces absolute 1-byte layout packing (`#[repr(packed)]`) to maintain the exact footprint.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct GTOSUnifiedTokenBuffer {
     pub allocated_capacity: u32,  // 4 bytes
     pub active_token_length: u32, // 4 bytes
-    pub raw_byte_payload: [u8; 505], // 505 bytes of raw text space
-} // Total: 4 + 4 + 505 = 513 bytes natively
+    pub raw_byte_payload: [u8; 509], // 509 bytes of raw text space (Prime)
+}
+
+// Static compile-time verification guards to prevent memory layout breaches
+const _: () = assert!(core::mem::size_of::<GTOSUnifiedTokenBuffer>() == 517);
+const _: () = assert!(core::mem::align_of::<GTOSUnifiedTokenBuffer>() == 1);
 
 pub struct GTOSHALAIComputeDriver {
     pub buffer_footprint_bytes: usize,
 }
 
 impl GTOSHALAIComputeDriver {
-    /// Constructor: Enforces the exact 513-byte layout constraint at initialization
+    /// Constructor: Enforces the exact architectural driver footprint
     pub const fn new() -> Self {
-        // Compile-time layout width assertion guard
-        Self { buffer_footprint_bytes: 513 }
+        Self { buffer_footprint_bytes: 521 }
     }
 
     /// Allocates an isolated, clean memory frame directly on the stack
     pub fn allocate_unified_frame(&self) -> GTOSUnifiedTokenBuffer {
         GTOSUnifiedTokenBuffer {
-            allocated_capacity: 505,
+            allocated_capacity: 509,
             active_token_length: 0,
-            raw_byte_payload: [0u8; 505], // Sanitized zeroed array
+            raw_byte_payload: [0u8; 509], // Sanitized zeroed array
         }
     }
 
@@ -45,7 +48,7 @@ impl GTOSHALAIComputeDriver {
         let token_len = incoming_token_bytes.len();
         let new_length = current_len + token_len;
 
-        // Prevent buffer overflows over the rigid 505-byte capacity wall
+        // Prevent buffer overflows over the rigid 509-byte capacity wall
         if new_length > buffer_frame.allocated_capacity as usize {
             return false;
         }

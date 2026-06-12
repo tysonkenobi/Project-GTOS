@@ -41,7 +41,7 @@ fn main() {
     let compute_driver = GTOSHALAIComputeDriver::new();
     
     // Instantiate Executive with a precise threshold baseline parameter limit
-    let mut executive = GTOSKernelCoreExecutive::new(0.10);
+    let mut executive = GTOSKernelCoreExecutive::new(100_000);
     let mut buffer_frame = compute_driver.allocate_unified_frame();
 
     // -------------------------------------------------------------------------
@@ -61,12 +61,12 @@ fn main() {
     let _stream_ok = compute_driver.stream_token_to_hardware(&mut buffer_frame, token_data);
 
     // Establish rigid 4x4 matrix diagonals under Minkowski vacuum conditions
-    let mut schwarzschild: [f64; 16] = [0.0; 16];
-    schwarzschild[0] = -1.0;
-    schwarzschild[5] = 1.0;
-    schwarzschild[10] = 1.0;
-    schwarzschild[15] = 1.0;
-    let ricci = [0.0f64; 16];
+    let mut schwarzschild: [i64; 16] = [0; 16];
+    schwarzschild[0] = -1_000_000;
+    schwarzschild[5] = 1_000_000;
+    schwarzschild[10] = 1_000_000;
+    schwarzschild[15] = 1_000_000;
+    let ricci = [0i64; 16];
 
     // Offload the unfragmented Layer 2 buffer frame directly into Layer 1's accelerator matrix trace via Layer 3
     let compute_status = unsafe {

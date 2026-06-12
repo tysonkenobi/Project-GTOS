@@ -17,7 +17,7 @@ pub struct GTOSHalMMU {
 }
 
 impl GTOSHalMMU {
-    pub const PHI_BASE: f64 = 1.618033988749895;
+    pub const PHI_BASE: i32 = 1_618_034;
 
     pub const fn new() -> Self {
         Self {
@@ -30,12 +30,13 @@ impl GTOSHalMMU {
         }
     }
 
-    pub fn calculate_geometric_time_delta(&self, page_index: usize) -> f64 {
-        if page_index >= self.oloid_page_pool.len() { return 0.0; }
-        let distance = self.oloid_page_pool[page_index].boundary_distance_metric as f64;
-        let phi_cubed = Self::PHI_BASE * Self::PHI_BASE * Self::PHI_BASE;
-        let compression_denominator = 6.0 * phi_cubed;
-        distance / compression_denominator
+    pub fn calculate_geometric_time_delta(&self, page_index: usize) -> i32 {
+        if page_index >= self.oloid_page_pool.len() { return 0; }
+
+        let distance = self.oloid_page_pool[page_index].boundary_distance_metric as i32;
+
+        let compression_factor = 39_345;
+        distance * compression_factor
     }
 
     pub fn resolve_oloid_address(
@@ -45,7 +46,7 @@ impl GTOSHalMMU {
         requested_allocation: usize
     ) -> usize {
         if page_index >= self.oloid_page_pool.len() {
-            reg_map.trigger_boundary_redirection(ManifoldSpinState::BoundaryInversion, 0.0);
+            reg_map.trigger_boundary_redirection(ManifoldSpinState::BoundaryInversion, 0);
             return 0; 
         }
         let page = &mut self.oloid_page_pool[page_index];

@@ -53,13 +53,13 @@ fn main() {
     let post_stream_len = buffer_frame.active_token_length;
 
     // ADD THIS LINE HERE: Maps the metrics to create the missing block baseline
-    let block_baseline = _accelerator.map_metrics_to_hardware_bus(0x01, 0, 0x00, 1.2, 0.4);
+    let block_baseline = _accelerator.map_metrics_to_hardware_bus(0x01, 0, 0x00, 1_200_000, 400_000);
 
     // -------------------------------------------------------------------------
     // 3. TEST VECTOR 2: CAPACITANCE BOUNDARY OVERFLOW TRACKING
     // -------------------------------------------------------------------------
-    // Force an excessive, malicious data load designed to violate the 505-byte arena
-    let massive_exploit_payload = [0xFFu8; 510];
+    // Force an excessive, malicious data load designed to violate the 509-byte arena
+    let massive_exploit_payload = [0xFFu8; 522];
     let run_overflow = compute_driver.stream_token_to_hardware(&mut buffer_frame, &massive_exploit_payload);
     
     let final_token_len = buffer_frame.active_token_length;
@@ -70,13 +70,13 @@ fn main() {
     }
 
     // Direct Gear Mesh: Feed the resulting Layer 2 buffer metric into Layer 1 pins
-    let mut metric_schwarzschild: [f64; 16] = [1.0; 16];
-    metric_schwarzschild[0] = final_token_len as f64; // Scale spacetime metric by active text length
-    let _integrated_status = _accelerator.enforce_boundary_constraint(block_baseline, metric_schwarzschild, [0.0; 16]);
+    let mut metric_schwarzschild: [i64; 16] = [1_000_000; 16]; // Scaled 1.0 baseline
+    metric_schwarzschild[0] = (final_token_len as i64) * 1_000_000; 
+    let _integrated_status = _accelerator.enforce_boundary_constraint(block_baseline, metric_schwarzschild, [0i64; 16]);
 
     // 1. Validate the 24-byte Register Export using 1/φ² step multiplier
-    let ffi_registers = export_kernel_state_to_c(1, 0.75, 42);
-    let step_mult_bits = (ffi_registers.address_step_mult * 100.0) as u8;
+    let ffi_registers = export_kernel_state_to_c(1, 750_000, 42);
+    let step_mult_bits = (ffi_registers.address_step_mult & 0xFF) as u8;
 
     // 2. Validate Zero-Copy 24-byte Coordinate Ingestion
     let raw_coordinate_bytes: [u8; 24] = [0x01; 24]; // Simulate incoming 24-byte stream
@@ -86,6 +86,15 @@ fn main() {
     // 3. Validate the 8-Byte Pointer Offset Jump over the 513-byte buffer
     let raw_payload_memory_address = unsafe { get_token_payload_pointer(&mut buffer_frame) as usize };
     let address_low_byte = (raw_payload_memory_address & 0xFF) as u8;
+
+    // -------------------------------------------------------------------------
+    // VALIDATION MATRIX: Track real layout compliance and firewall status
+    // -------------------------------------------------------------------------
+    // True if your compiled memory block evaluates to exactly 517 bytes
+    let is_buffer_size_valid = core::mem::size_of::<GTOSUnifiedTokenBuffer>() == 517;
+    
+    // True if your overflow routine successfully caught and blocked the 522-byte exploit payload
+    let is_firewall_secure = !run_overflow;
 
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & PHYSICAL FOOTPRINT EVALUATION
@@ -133,11 +142,18 @@ fn main() {
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
     println!("=================================================================");
-    println!("       GTOS METAL-NATIVE LAYER 2 OBJECTIVE ARCHITECTURE TEST     ");
+    println!("      GTOS METAL-NATIVE LAYER 2 OBJECTIVE ARCHITECTURE TEST      ");
     println!("=================================================================");
-    println!("[STATUS] 513-Byte geometric harmonic unpadded buffer allocated.");
+    
+    println!(
+        "[STATUS] 517-Byte geometric harmonic buffer allocation: {}", 
+        if is_buffer_size_valid { "PASS (Valid)" } else { "FAIL (Layout Corrupted)" }
+    );
     println!("[STATUS] Native pointer offset DMA streaming lanes active.");
-    println!("[STATUS] 505-Byte strict boundary capacity firewall validated.");
+    println!(
+        "[STATUS] 509-Byte strict boundary capacity firewall:    {}", 
+        if is_firewall_secure { "PASS (Secure)" } else { "FAIL (Exploited)" }
+    );
     
     println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
     println!("   Verified Hardware Hash Token: {}\n", real_signature);

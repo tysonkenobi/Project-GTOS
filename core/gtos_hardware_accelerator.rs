@@ -19,8 +19,8 @@ pub struct GTOSAcceleratorControlBlock {
     pub command_trigger_flag: u8,
     pub active_manifold_state: i8,
     pub phase_velocity_link: u8,
-    pub token_entropy_register: f64,
-    pub token_variance_register: f64,
+    pub token_entropy_register: i32,  // Hardened to fixed-point i32 (4 bytes)
+    pub token_variance_register: i32, // Hardened to fixed-point i32 (4 bytes)
 }
 
 pub struct GTOSHardwareAcceleratorInterface {
@@ -30,10 +30,10 @@ pub struct GTOSHardwareAcceleratorInterface {
 impl GTOSHardwareAcceleratorInterface {
     // Constant definition of the right-side reality brake modifier: -(G * hbar / c^3)
     // Approximate raw Planck scale constant parameter used for boundary calculation
-    pub const PLANCK_SCALE_FACTOR: f64 = -1.35639e-34; 
+    pub const PLANCK_SCALE_FACTOR: i64 = -13564;
 
     pub const fn new() -> Self {
-        Self { register_footprint_bytes: 19 }
+        Self { register_footprint_bytes: 11 }
     }
 
     pub fn map_metrics_to_hardware_bus(
@@ -41,8 +41,8 @@ impl GTOSHardwareAcceleratorInterface {
         command_bit: u8, 
         manifold: i8,
         phase_link: u8, 
-        entropy: f64, 
-        variance: f64
+        entropy: i32, 
+        variance: i32
     ) -> GTOSAcceleratorControlBlock {
         GTOSAcceleratorControlBlock {
             command_trigger_flag: command_bit,
@@ -58,8 +58,8 @@ impl GTOSHardwareAcceleratorInterface {
     pub fn enforce_boundary_constraint(
         &self,
         control_block: GTOSAcceleratorControlBlock,
-        schwarzschild_metric: [f64; 16], // g_mu_nu (4x4)
-        ricci_tensor: [f64; 16],         // R_mu_nu (4x4)
+        schwarzschild_metric: [i64; 16], // g_mu_nu (4x4)
+        ricci_tensor: [i64; 16],         // R_mu_nu (4x4)
     ) -> AccelStatus {
         if control_block.command_trigger_flag != 0x01 {
             return AccelStatus::IdleHolding;
@@ -67,26 +67,28 @@ impl GTOSHardwareAcceleratorInterface {
 
         // Left Side Calculation: ln( Information Matrix / (1/phi^3) )
         // Using token entropy as our live informational variable input
-        let left_side_scalar = control_block.token_entropy_register;
+        // Hardened: Cast the i32 entropy register up to i64 to safely support 64-bit multiplication steps
+        let left_side_scalar = control_block.token_entropy_register as i64;
 
-        // Calculate the true physical trace sum across the 4x4 matrix diagonals
-        let mut left_trace = 0.0;
-        let mut right_trace = 0.0;
-        let diagonals: [usize; 4] = [0, 5, 10, 15]; // T, X, Y, Z axis grid coordinates
+        // Hardened: Initialize tracking registers as clean, unpadded i64 integers
+        let mut left_trace: i64 = 0;
+        let mut right_trace: i64 = 0;
+        let diagonals: [usize; 4] = [0, 5, 10, 15];
 
         for idx in 0..4 {
             let cell = diagonals[idx];
-            left_trace += left_side_scalar * schwarzschild_metric[cell];
-            right_trace += Self::PLANCK_SCALE_FACTOR * ricci_tensor[cell];
+            // Corrected lines matching your parameters:
+            left_trace = left_trace.saturating_add(left_side_scalar.saturating_mul(schwarzschild_metric[cell]));
+            right_trace = right_trace.saturating_add(Self::PLANCK_SCALE_FACTOR.saturating_mul(ricci_tensor[cell]));
         }
 
-        // If the informational matrix meets or exceeds the physical Ricci tensor boundary limit,
-        // all degrees of freedom drop to zero—triggering the reality brake state.
+
         if left_trace >= right_trace {
             return AccelStatus::BoundaryEquilibriumReached;
         }
 
-        if left_side_scalar > 2.5 {
+        // Hardened: Fixed-point barrier ceiling check equivalent to the old 2.5 float threshold
+        if left_side_scalar > 2_500_000 {
             return AccelStatus::GeometricDivergenceTrapped;
         }
 

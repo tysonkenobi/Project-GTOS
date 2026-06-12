@@ -36,30 +36,35 @@ fn main() {
     let _read_ier = GTOSRegisterMap::REG_IER_INTERRUPT;
 
     // -------------------------------------------------------------------------
-    // 2. TEST VECTOR 1: MINKOWSKI VACUUM baseline DIAGONAL CHECK
+    // 2. TEST VECTOR 1: MINKOWSKI VACUUM BASELINE DIAGONAL CHECK
     // -------------------------------------------------------------------------
-    // Configured precisely per Section 1.1: diag(-1.0, +1.0, +1.0, +1.0)
-    let mut minkowski_metric: [f64; 16] = [0.0; 16];
-    minkowski_metric[0] = -1.0; // Temporal axis
-    minkowski_metric[5] = 1.0;  // X axis
-    minkowski_metric[10] = 1.0; // Y axis
-    minkowski_metric[15] = 1.0; // Z axis
+    // Hardened: Matrix arrays refactored to pure i64 types
+    let mut minkowski_metric_fixed: [i64; 16] = [0; 16];
+    minkowski_metric_fixed[0] = -1_000_000; // Scaled -1.0 temporal axis
+    minkowski_metric_fixed[5] = 1_000_000;  // Scaled +1.0 X axis
+    minkowski_metric_fixed[10] = 1_000_000; // Scaled +1.0 Y axis
+    minkowski_metric_fixed[15] = 1_000_000; // Scaled +1.0 Z axis
 
-    let normal_ricci: [f64; 16] = [0.0; 16]; // Flat space curvature baseline
-    let block_baseline = accelerator.map_metrics_to_hardware_bus(0x01, 0, 0x00, 1.2, 0.4);
-    let status_baseline = accelerator.enforce_boundary_constraint(block_baseline, minkowski_metric, normal_ricci);
+    let normal_ricci_fixed: [i64; 16] = [0; 16]; 
+    
+    // Hardened: Passing fixed-point i32 entropy (1.2 -> 1_200_000) and variance (0.4 -> 400_000)
+    let block_baseline = accelerator.map_metrics_to_hardware_bus(0x01, 0, 0x00, 1_200_000, 400_000);
+    let status_baseline = accelerator.enforce_boundary_constraint(block_baseline, minkowski_metric_fixed, normal_ricci_fixed);
 
     // -------------------------------------------------------------------------
     // 3. TEST VECTOR 2: THE ARROW OPERATOR SURGE TRAP (PLANCK SURGE)
     // -------------------------------------------------------------------------
-    // Section 1.3.2: Force a metric stress surge that exceeds the normalized Planck Limit
-    let high_stress_ricci: [f64; 16] = [100.0; 16]; // Severe Ricci curvature spike
-    let block_surge = accelerator.map_metrics_to_hardware_bus(0x01, 1, 0x00, 50.0, 0.9);
-    let status_surge = accelerator.enforce_boundary_constraint(block_surge, minkowski_metric, high_stress_ricci);
+    // Hardened: Ricci curvature matrix array refactored to pure i64 elements (100.0 -> 100_000_000)
+    let high_stress_ricci_fixed: [i64; 16] = [100_000_000; 16]; 
+    
+    // Hardened: Passing fixed-point i32 entropy (50.0 -> 50_000_000) and variance (0.9 -> 900_000)
+    let block_surge = accelerator.map_metrics_to_hardware_bus(0x01, 1, 0x00, 50_000_000, 900_000);
+    let status_surge = accelerator.enforce_boundary_constraint(block_surge, minkowski_metric_fixed, high_stress_ricci_fixed);
+
 
     // If the boundary equilibrium engaged, trip Layer 1 hardware status flags
     if status_surge == AccelStatus::BoundaryEquilibriumReached {
-        reg_map.trigger_boundary_redirection(ManifoldSpinState::BoundaryInversion, 50.0);
+        reg_map.trigger_boundary_redirection(ManifoldSpinState::BoundaryInversion, 50_000_000);
     }
     
     // ENGAGE CENTRALISED MEMORY MAP:
@@ -84,7 +89,7 @@ fn main() {
     combined_hardware_snapshot[4] = (_read_base & 0xFF) as u8;
     combined_hardware_snapshot[5] = ((_read_base >> 8) & 0xFF) as u8;
     combined_hardware_snapshot[6] = (_addr & 0xFF) as u8;
-    combined_hardware_snapshot[7] = (_time * 100000.0) as u8; // Converts float scale time delta to integer bits
+    combined_hardware_snapshot[7] = (_time & 0xFF) as u8;
 
     // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);

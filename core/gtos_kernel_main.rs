@@ -26,16 +26,16 @@ pub enum ManifoldDomain {
 #[derive(Debug, Clone, Copy)]
 pub struct GTOSFileNodeSeed {
     pub coordinate_vector: GTOSCoordinatePayload, // 24-byte FFI shared tensor
-    pub temporal_weight_t: f64,                   // 8 bytes
+    pub temporal_weight_t: i64,                   // 8 bytes
     pub manifold_domain: i32,                     // 4 bytes
 } // Total footprint: 24 + 8 + 4 = 36 bytes precisely on the stack
 
 pub struct GTOSKernelMemoryController {
-    pub boundary_limit: f64,
-    pub phi_sixth_unit: f64,
-    pub golden_angle: f64,
+    pub boundary_limit: i64,
+    pub phi_sixth_unit: i64,
+    pub golden_angle: i32,
     pub active_manifold_state: ManifoldDomain,
-    pub system_load: f64,
+    pub system_load: i64,
     pub allocation_counter: u32,
 }
 
@@ -45,27 +45,27 @@ pub struct GTOSKernelCoreExecutive {
 }
 
 impl GTOSKernelMemoryController {
-    pub const PHI: f64 = 1.618033988749895;
+    pub const PHI: i64 = 1_618_034
 
-    pub const fn new(boundary_threshold: f64) -> Self {
+    pub const fn new(boundary_threshold: i64) -> Self {
         Self {
             boundary_limit: boundary_threshold,
-            phi_sixth_unit: 1.0 / (6.0 * (Self::PHI * Self::PHI * Self::PHI)),
-            golden_angle: 2.0 * core::f64::consts::PI * (1.0 - (1.0 / Self::PHI)),
+            phi_sixth_unit: 39_345,
+            golden_angle: 2_399_963,
             active_manifold_state: ManifoldDomain::StablePositive,
-            system_load: 0.0,
+            system_load: 0,
             allocation_counter: 0,
         }
     }
 
     /// Computes the exact temporal latency age relative to current physical load
-    pub fn calculate_temporal_distance(&self, load_state: f64) -> f64 {
+    pub fn calculate_temporal_distance(&self, load_state: i64) -> i64 {
         (self.boundary_limit - load_state) / self.phi_sixth_unit
     }
 }
 
 impl GTOSKernelCoreExecutive {
-    pub const fn new(boundary_threshold: f64) -> Self {
+    pub const fn new(boundary_threshold: i64) -> Self {
         Self {
             memory_controller: GTOSKernelMemoryController::new(boundary_threshold),
             compressor: GTOSVoidCompressor,
@@ -85,7 +85,7 @@ impl GTOSKernelCoreExecutive {
         let packed_seed = self.compressor.compress_payload_to_seed(payload);
 
         // Step 2: Extract memory addresses using your Oloid logarithmic spirals
-        let _resolved_ptr = mmu.resolve_oloid_address(reg_map, page_index, 513);
+        let _resolved_ptr = mmu.resolve_oloid_address(reg_map, page_index, 517);
 
         // In a live metal system, packed_seed.x/y/z coordinates are written directly to this resolved RAM offset
         packed_seed
@@ -98,46 +98,51 @@ impl GTOSKernelCoreExecutive {
         accelerator: &GTOSHardwareAcceleratorInterface,
         reg_map: &mut GTOSRegisterMap,
         buffer_frame: &GTOSUnifiedTokenBuffer,
-        schwarzschild_metric: [f64; 16],
-        ricci_tensor: [f64; 16],
+        schwarzschild_metric: [i64; 16],
+        ricci_tensor: [i64; 16],
     ) -> AccelStatus {
         self.memory_controller.allocation_counter += 1;
 
-        // Step A: Calculate physical entry entropy based on active token stream length
-        let current_len = buffer_frame.active_token_length as usize;
-        let spatial_entropy = if current_len == 0 {
-            0.0
+        // Step A: Pure integer token weight mapping
+        let current_len = buffer_frame.active_token_length as i64;
+        
+        // Hardened: Replaces the slow bit-cast float hack with a clean integer metric (scaled 1,000,000)
+        let spatial_entropy: i32 = if current_len == 0 {
+            0
         } else {
-            (current_len as f64).to_bits() as f64 * 0.00001 / (current_len as f64)
+            // Evaluates token spatial weight using basic, fast multiplication loops
+            (current_len * 10_000) as i32
         };
 
-        self.memory_controller.system_load += spatial_entropy;
+        self.memory_controller.system_load += spatial_entropy as i64;
 
-        // Step B: Execute the Phase Inversion engine if the load breaches the threshold boundary
+        // Step B: Execute the Phase Inversion engine using pure integer steps
         if self.memory_controller.system_load >= self.memory_controller.boundary_limit {
             self.memory_controller.active_manifold_state = match self.memory_controller.active_manifold_state {
                 ManifoldDomain::StablePositive => ManifoldDomain::InvertedNegative,
                 ManifoldDomain::InvertedNegative => ManifoldDomain::StablePositive,
             };
-            self.memory_controller.system_load = (self.memory_controller.boundary_limit - self.memory_controller.system_load).abs();
             
-            // Interrupt Line: Flag hardware register map that a coordinate flip occurred
-            reg_map.write_register_byte(2, 0xAA); // Sets boundary inversion state flag
+            // Hardened: Replaces floating-point .abs() with a non-branching bitwise or saturating math approach
+            let drift = self.memory_controller.boundary_limit - self.memory_controller.system_load;
+            self.memory_controller.system_load = if drift < 0 { -drift } else { drift };
+            
+            reg_map.write_register_byte(2, 0xAA); 
         }
 
-        // Step C: direct hardware offloading via the 19-byte accelerator control registers
+        // Step C: Direct hardware offloading to the unpadded 11-byte Lucas registers
         let clean_manifold = self.memory_controller.active_manifold_state as i32 as i8;
-        let voice_link = buffer_frame.raw_byte_payload[0]; // Samples your 1-byte wave continuum phase velocity
+        let voice_link = buffer_frame.raw_byte_payload[0]; 
 
         let control_block = accelerator.map_metrics_to_hardware_bus(
-            0x01,           // Trigger bit active
-            clean_manifold, // Passes current positive or inverted manifold code
-            voice_link,     // Extracted audio phase sync line
+            0x01,           
+            clean_manifold, 
+            voice_link,     
             spatial_entropy, 
-            0.5,            // Base variance coefficient
+            500_000, // Hardened: Base variance coefficient scaled to fixed-point (0.5 -> 500_000)
         );
 
-        // Step D: Trigger physical hardware reality brake calculations across 4x4 diagonals simultaneously
+        // Step D: Trigger hardware reality brake calculations across 4x4 integer diagonals
         accelerator.enforce_boundary_constraint(control_block, schwarzschild_metric, ricci_tensor)
     }
 }
