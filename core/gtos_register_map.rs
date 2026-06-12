@@ -2,8 +2,6 @@
 // GTOS Layer 1: Metal-Native Register Map
 // Tracks complex boundary conjugations and manifold loop states
 
-#![no_std]
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum ManifoldSpinState {

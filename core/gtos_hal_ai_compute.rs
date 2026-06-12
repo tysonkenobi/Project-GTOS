@@ -2,8 +2,6 @@
 // GTOS Layer 2: Metal-Native HAL AI Compute Driver
 // Enforces 521-byte Lucas harmonic unified token buffering with zero padding overhead
 
-#![no_std]
-
 /// Rigid contiguous memory tracking space for raw token text streams.
 /// Enforces absolute 1-byte layout packing (`#[repr(packed)]`) to maintain the exact footprint.
 #[repr(C, packed)]

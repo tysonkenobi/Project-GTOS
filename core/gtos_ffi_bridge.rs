@@ -2,8 +2,6 @@
 // GTOS Layer 2: Metal-Native Foreign Function Interface (FFI) Bridge
 // Exposes 24-byte coordinate tensors and raw memory pointer addresses cleanly to C/Python runtimes
 
-#![no_std]
-
 use crate::gtos_hal_ai_compute::{GTOSUnifiedTokenBuffer};
 
 /// Rigid 24-byte hardware metrics register structure.

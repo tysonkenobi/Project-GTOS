@@ -2,8 +2,6 @@
 // GTOS Layer 3: Metal-Native Kernel Executive & Scheduler Core
 // Orchestrates multi-layer memory page allocation, hardware offloading, and phase-inversion loops
 
-#![no_std]
-
 // Top header import updates for total pathing alignment
 
 use crate::gtos_register_map::{GTOSRegisterMap};

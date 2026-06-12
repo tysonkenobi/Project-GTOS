@@ -1,8 +1,6 @@
 // core/gtos_token_bridge.rs
 // GTOS Layer 2: Metal-Native Semantic Token Bridge & Acoustic Coupler Link
 
-#![no_std]
-
 use core::ptr::{read_unaligned, write_unaligned};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

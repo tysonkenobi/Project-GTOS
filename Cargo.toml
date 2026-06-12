@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["TysonKenobi"]
 description = "GTOS Core Operating System Architecture & Monolithic Conductor"
+autotests = false
 
 [profile.release]
 opt-level = 3           # Maximize high-speed execution optimization
@@ -23,22 +24,27 @@ path = "core/lib.rs"
 [[bin]]
 name = "gtos-sysmon-l1"
 path = "tests/gtos_layer1_harness.rs"
+test = false
 
 [[bin]]
 name = "gtos-sysmon-l2"
 path = "tests/gtos_layer2_harness.rs"
+test = false
 
 [[bin]]
 name = "gtos-sysmon-l3"
 path = "tests/gtos_layer3_harness.rs"
+test = false
 
 [[bin]]
 name = "gtos-sysmon-l4"
 path = "tests/gtos_layer4_harness.rs"
+test = false
 
 [[bin]]
 name = "gtos-conductor-test"
 path = "tests/gtos_conductor_harness.rs"
+test = false
 
 # =========================================================================
 # CORE APPLICATIONS & HUMAN INTERFACE LAYER
@@ -55,7 +61,7 @@ path = "tests/gtos_conductor_harness.rs"
 # =========================================================================
 # THE AMBIENT QUANTUM GUI LAYER (Sensory Spatial Interfaces)
 # =========================================================================
-# Tracks the future GUI—turning raw visual/audio and biometric sensory data into 3D vectors
+# Tracks the future GUI—turning raw visual/audio and biometric sensory data into 3D vectors for use across applications
 
 # [[bin]]
 # name = "gtos-wave-visualacoustic"

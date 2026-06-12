@@ -2,8 +2,6 @@
 // GTOS Layer 1: Metal-Native Hardware Accelerator Driver
 // Enforces the zero-degree-of-freedom Euler conjugate reality brake
 
-#![no_std]
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum AccelStatus {

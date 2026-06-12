@@ -1,8 +1,6 @@
 // core/hal_mmu.rs
 // GTOS Layer 1: Metal-Native Central Hardware Abstraction Layer MMU
 
-#![no_std]
-
 use crate::gtos_register_map::{GTOSRegisterMap, ManifoldSpinState};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,8 +47,16 @@ impl GTOSHalMMU {
             reg_map.trigger_boundary_redirection(ManifoldSpinState::BoundaryInversion, 0);
             return 0; 
         }
+
+        // --- PHASE 9: GEOMETRIC VOID ALIGNMENT ENFORCEMENT ---
+        // Force the allocation size to snap to an unfragmented geometric boundary.
+        // We use an 8-byte alignment barrier matching the Layer 3 translation gate.
+        let alignment_barrier = 8;
+        let geometric_aligned_allocation = (requested_allocation + (alignment_barrier - 1)) & !(alignment_barrier - 1);
+        // -----------------------------------------------------
+
         let page = &mut self.oloid_page_pool[page_index];
-        page.allocated_capacity_bytes = requested_allocation;
+        page.allocated_capacity_bytes = geometric_aligned_allocation;
         page.base_pointer_address
     }
 }

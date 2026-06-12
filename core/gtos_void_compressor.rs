@@ -2,8 +2,6 @@
 // GTOS Layer 3: Metal-Native Dynamic Void Compressor Engine
 // Translates raw byte streams into unpadded 24-byte geometric coordinate payloads
 
-#![no_std]
-
 use crate::gtos_ffi_bridge::GTOSCoordinatePayload;
 
 pub struct GTOSVoidCompressor;

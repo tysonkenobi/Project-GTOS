@@ -1,8 +1,6 @@
 // core/gtos_robot_driver.rs
 // GTOS Layer 4: Metal-Native Low-Latency Robot Telemetry & Actuator Driver
 
-#![no_std]
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum ActuatorBrakeStatus {
