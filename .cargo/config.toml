@@ -1,0 +1,15 @@
+# .cargo/config.toml
+# GTOS Target Architecture Configuration Matrix
+
+[build]
+# Keeps your default high-speed development compilation pointed at your Mac Air
+target = "x86_64-apple-darwin"
+
+[target.x86_64-unknown-none]
+# Linker flags instructing the compiler how to package naked raw machine code for Phase 10
+rustflags = [
+    "-C", "link-arg=-nostdlib",         # Erase all assumptions of an underlying host OS
+    "-C", "link-arg=-static",           # Lock code into absolute static address positioning
+    "-C", "panic=abort",                # Drop standard panics; force immediate execution halt
+    "-C", "code-model=kernel",          # Force the compiler to use strict kernel memory address rules
+]
