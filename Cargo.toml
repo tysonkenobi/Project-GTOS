@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["TysonKenobi"]
 description = "GTOS Core Operating System Architecture & Monolithic Conductor"
+autobins = false
 autotests = false
 
 [profile.release]

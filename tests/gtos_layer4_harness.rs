@@ -1,6 +1,9 @@
 // gtos_layer4_harness.rs
 // GTOS Phase 7.2 Objective Layer 4 Robot Driver Integration Test Rig
 
+#![cfg_attr(target_os = "none", no_std)]
+#![cfg_attr(target_os = "none", no_main)]
+
 #[path = "../core/gtos_register_map.rs"]
 mod gtos_register_map;
 #[path = "../core/gtos_hardware_accelerator.rs"]
@@ -138,6 +141,10 @@ fn main() {
     combined_hardware_snapshot[7] = buffer_frame.active_token_length as u8;      // Capacity firewall depth check
 
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
+    
+    #[cfg(not(target_os = "none"))]
+    {
+    
     let real_signature = format!("GTOS_METAL_4_STATE_HASH_0x{:X}", raw_fingerprint);
     
     let fake_signature_a = format!("GTOS_METAL_4_STATE_HASH_0x{:X}", raw_fingerprint.wrapping_add(0xDEADBEEF));
@@ -195,4 +202,20 @@ fn main() {
     println!("Option B: \"{}\"", options[1]);
     println!("Option C: \"{}\"", options[2]);
     println!("-----------------------------------------------------------------");
+
+    } 
+} 
+
+// Bare-metal hardware panic and entry loop fallbacks
+#[cfg(target_os = "none")]
+#[no_mangle]
+pub unsafe extern "C" fn _start() -> ! {
+    main();
+    loop { core::hint::spin_loop(); }
+}
+
+#[cfg(target_os = "none")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }

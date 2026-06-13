@@ -1,6 +1,8 @@
 // gtos_layer2_harness.rs
 // GTOS Phase 6.6 Objective Layer 2 Hardware Abstraction Integration Test Harness
 
+#![cfg_attr(target_os = "none", no_std)]
+#![cfg_attr(target_os = "none", no_main)]
 
 // TO ENSURE LAYER HARNESSES CAN TEST THEMSELVES AND THEIR INTEROPERABILITY, PATH/USE OF LAYER MODULES IS SET HERE
 #[path = "../core/gtos_register_map.rs"]
@@ -111,6 +113,10 @@ fn main() {
 
     // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
+
+    #[cfg(not(target_os = "none"))]    
+    {
+
     let real_signature = format!("GTOS_METAL_2_STATE_HASH_0x{:X}", raw_fingerprint);
     
     let fake_signature_a = format!("GTOS_METAL_2_STATE_HASH_0x{:X}", raw_fingerprint.wrapping_add(0xDEADBEEF));
@@ -164,4 +170,20 @@ fn main() {
     println!("Option B: \"{}\"", options[1]);
     println!("Option C: \"{}\"", options[2]);
     println!("-----------------------------------------------------------------");
+
+    } 
+} 
+
+// Bare-metal hardware panic and entry loop fallbacks
+#[cfg(target_os = "none")]
+#[no_mangle]
+pub unsafe extern "C" fn _start() -> ! {
+    main();
+    loop { core::hint::spin_loop(); }
+}
+
+#[cfg(target_os = "none")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }

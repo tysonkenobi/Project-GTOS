@@ -12,4 +12,5 @@ rustflags = [
     "-C", "link-arg=-static",           # Lock code into absolute static address positioning
     "-C", "panic=abort",                # Drop standard panics; force immediate execution halt
     "-C", "code-model=kernel",          # Force the compiler to use strict kernel memory address rules
+    "-C", "link-arg=-Tproducer.ld",     # Hand over the mixing blueprint to producer
 ]

@@ -1,6 +1,9 @@
 // tests/gtos_conductor_harness.rs
 // GTOS Phase 8.2 Monolithic Master Conductor Execution & Integration Test Harness
 
+#![cfg_attr(target_os = "none", no_std)]
+#![cfg_attr(target_os = "none", no_main)]
+
 use gtos_core::gtos_conductor::GTOSMonolithicHarness;
 
 fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
@@ -53,6 +56,10 @@ fn main() {
 
     // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
+    
+    #[cfg(not(target_os = "none"))]
+    {
+
     let real_signature = format!("GTOS_METAL_8_STATE_HASH_0x{:X}", raw_fingerprint);
 
     // Mathematically mutated decoys to evaluate drift and verification logic
@@ -102,4 +109,20 @@ fn main() {
     println!("Option B: \"{}\"", options[1]);
     println!("Option C: \"{}\"", options[2]);
     println!("-----------------------------------------------------------------");
+
+    } 
+} 
+
+// Bare-metal hardware panic and entry loop fallbacks
+#[cfg(target_os = "none")]
+#[no_mangle]
+pub unsafe extern "C" fn _start() -> ! {
+    main();
+    loop { core::hint::spin_loop(); }
+}
+
+#[cfg(target_os = "none")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }
