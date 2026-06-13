@@ -47,63 +47,55 @@ path = "tests/gtos_conductor_harness.rs"
 test = false
 
 # =========================================================================
-# CORE APPLICATIONS & HUMAN INTERFACE LAYER
+# PHASE 10 TARGET V1 CORE SYSTEMS (THE CHROME CANVAS)
 # =========================================================================
+# These define the baseline operational tools to boot the V1 platform.
+# They modulate chaotic inputs into clean, unfragmented 517-byte chords.
 
 # [[bin]]
-# name = "gtos-chord-editor"
-# path = "apps/gtos_chord_editor.rs"   # Zero-allocation text/chord composition tool
+# name = "gtos-modulator-core"
+# path = "apps/gtos_modulator_core.rs"
+# V1 Core Ingestor: Modulates raw byte streams into unallocated 517-byte chords.
 
 # [[bin]]
 # name = "gtos-core-shell"
-# path = "apps/gtos_core_shell.rs"     # Master interactive system console and skin root
+# path = "apps/gtos_core_shell.rs"
+# V1 Core Dashboard: Master zero-allocation diagnostic steering wheel.
 
 # =========================================================================
-# THE AMBIENT QUANTUM GUI LAYER (Sensory Spatial Interfaces)
+# FUTURE SENSUAL & HARDWARE ACCELERATION PLUGINS (LOAD-YOUR-OWN EXTENSIONS)
 # =========================================================================
-# Tracks the future GUI—turning raw visual/audio and biometric sensory data into 3D vectors for use across applications
+# Future plug-and-play tracking slots for the Instrument Ingestion Framework.
 
 # [[bin]]
-# name = "gtos-wave-visualacoustic"
-# path = "apps/gtos_wave_visualacoustic.rs" # Ingests Speaker/Mic/Voice frequency tokens
+# name = "gtos-instrument-acoustic"
+# path = "apps/gtos_instrument_acoustic.rs"
+# Ingests Speaker/Mic/Voice frequencies directly into 1/φ² compression voids.
 
 # [[bin]]
-# name = "gtos-spatial-vision"
-# path = "apps/gtos_spatial_vision.rs" # Renders VR Headset & Smart Glasses coordinate tracks
+# name = "gtos-instrument-vision"
+# path = "apps/gtos_instrument_vision.rs"
+# Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads.
 
 # [[bin]]
-# name = "gtos-bio-metrics"
-# path = "apps/gtos_bio_metrics.rs"   # Maps secure fingerprint, iris, and pulse invariants
-
-# =========================================================================
-# MACHINE ACTUATION & CO-PROCESSOR BRIDGES
-# =========================================================================
+# name = "gtos-instrument-biometrics"
+# path = "apps/gtos_bio_metrics.rs"
+# Maps secure fingerprint, iris, and pulse invariants directly to geometric chords.
 
 # [[bin]]
-# name = "gtos-robot-interface"
-# path = "apps/gtos_robot_interface.rs" # Scales 3D matrix math to external physical hardware
-
-# =========================================================================
-# INTEGRATED INTELLIGENCE PLATFORMS (AI & LLM Bridges)
-# =========================================================================
-# Local, unallocated runtime wrappers to query model logic straight via 517-byte chords
+# name = "gtos-instrument-robotics"
+# path = "apps/gtos_robot_interface.rs"
+# Routes 3-axis physical voltage metrics to external actuation hardware lanes.
 
 # [[bin]]
-# name = "gtos-ai-bridge-universal"
-# path = "apps/gtos_ai_bridge_universal.rs" # Native interface to pass tokens directly to AI/LLM 
-
-# =========================================================================
-# ECONOMIC INTEGRATION PLATFORMS & FINANCIAL MATRIX BRIDGES
-# =========================================================================
-# Blockchain and FIX bridges, alongside financial and currency utilities
+# name = "gtos-instrument-intelligence"
+# path = "apps/gtos_ai_bridge_universal.rs"
+# Strips LLM model weights of host bloat, mapping parameters directly to silicon cell arrays.
 
 # [[bin]]
-# name = "gtos-financial-fix"
-# path = "apps/gtos_financial_fix.rs" # Translates stock exchange message packets into 517-byte chords
-
-# [[bin]]
-# name = "gtos-blockchain-interface"
-# path = "apps/gtos_blockchain_interface.rs" # Native blockchain and GTOS handshake for nodes and contracts
+# name = "gtos-instrument-finance"
+# path = "apps/gtos_financial_fix.rs"
+# Translates stock/blockchain message packets straight into geometric chords.
 
 [dependencies]
 # Natively empty. Proves the zero-overhead/zero-dependency footprint.
