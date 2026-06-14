@@ -81,10 +81,22 @@ pub unsafe extern "C" fn _start() -> ! {
     }
 }
 
-// Global panic handler for the monolithic library block
+// =========================================================================
+// PANIC CORES: TARGET DISTRIBUTION FOR HOOD AND METAL SILICON
+// =========================================================================
+
+// 1. The Real Bare-Metal Production Cage (hp EliteBook 8440P)
 #[cfg(target_os = "none")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
-    // If a boundary constraint drops out, instantly drop the CPU lines to protect memory
+    // If a physical hardware boundary is crossed, freeze the CPU lines instantly
+    loop {}
+}
+
+// 2. The Local Dev Mixing Surface (Mac Air Host Monitoring)
+#[cfg(not(target_os = "none"))]
+#[panic_handler]
+fn panic_dev(_info: &core::panic::PanicInfo) -> ! {
+    // Standard-compatible tight loop fallback for stable toolchains
     loop {}
 }

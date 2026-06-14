@@ -11,7 +11,13 @@ autotests = false
 opt-level = 3           # Maximize high-speed execution optimization
 lto = true              # Enable Link-Time Optimization across layers
 codegen-units = 1       # Reduce code generation units to optimize binary density
-panic = "abort"         # Force immediate execution abort on violation to maintain secure states
+
+[profile.dev]
+panic = "abort" # Enforces clean, high-speed execution aborts for dev targets
+
+[profile.harness]
+inherits = "dev"    # Inherits development debugging symbols
+panic = "abort"     # Strictly forces abort behavior to stop the unwinding crash loop!
 
 [lib]
 name = "gtos_core"
@@ -46,6 +52,11 @@ test = false
 [[bin]]
 name = "gtos-conductor-test"
 path = "tests/gtos_conductor_harness.rs"
+test = false
+
+[[bin]]
+name = "gtos-sysmon-l5"
+path = "tests/gtos_layer5_harness.rs"
 test = false
 
 # =========================================================================
