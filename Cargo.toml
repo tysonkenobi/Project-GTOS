@@ -15,7 +15,8 @@ panic = "abort"         # Force immediate execution abort on violation to mainta
 
 [lib]
 name = "gtos_core"
-path = "core/lib.rs"    
+path = "core/lib.rs"
+crate-type = ["rlib", "staticlib"]  
 
 # =========================================================================
 # SYSTEM INTEGRATION UTILITIES & MAINTENANCE APPARATUSES

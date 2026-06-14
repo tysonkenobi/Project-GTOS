@@ -53,3 +53,38 @@ const _: () = assert!(core::mem::size_of::<gtos_robot_driver::GTOSRobotDriverSta
 // Asserts that your total compute layout block size (517) combined with the 
 // 4-byte interlock window perfectly matches your maximum physical container limit (521).
 const _: () = assert!(core::mem::size_of::<gtos_hal_ai_compute::GTOSUnifiedTokenBuffer>() + 4 == 521);
+
+// =========================================================================
+// PHASE 10.4 BARE-METAL HARDWARE CROSSOVER ENTRY POINT
+// =========================================================================
+
+/// The explicit entry symbol called directly by your assembly bootloader jump
+#[no_mangle]
+pub unsafe extern "C" fn _start() -> ! {
+    // 1. Statically initialize the unified master system context on the stack
+    let mut conductor = gtos_conductor::GTOSMonolithicHarness::initialize_system();
+
+    // 2. Bind the low-level MMU address layouts (0x8000 - 0xB000)
+    let _ = conductor.bind_hardware_memory();
+
+    // 3. Establish our direct VGA terminal video window anchor (0xB8000)
+    let vga_buffer = 0xB8000 as *mut u32;
+
+    // Overwrite the bootloader's '6P' check token with a bright green 'CS'
+    // 0x0A530A43 represents Bright Green 'S' (0x53) and Bright Green 'C' (0x43)
+    *vga_buffer = 0x0A530A43;
+
+    // 4. Fall straight into the master, non-divergent processing cycle
+    loop {
+        let peripheral_signal: [u8; 0] = [];
+        conductor.execute_system_tick(&peripheral_signal);
+    }
+}
+
+// Global panic handler for the monolithic library block
+#[cfg(target_os = "none")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    // If a boundary constraint drops out, instantly drop the CPU lines to protect memory
+    loop {}
+}

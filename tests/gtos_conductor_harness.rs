@@ -121,7 +121,7 @@ pub unsafe extern "C" fn _start() -> ! {
     loop { core::hint::spin_loop(); }
 }
 
-#[cfg(target_os = "none")]
+#[cfg(all(target_os = "none", test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
