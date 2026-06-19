@@ -1,6 +1,6 @@
 [package]
 name = "gtos_core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["TysonKenobi"]
 description = "GTOS Core Operating System Architecture & Monolithic Conductor"
@@ -55,7 +55,7 @@ path = "tests/gtos_layer5_harness.rs"
 test = false
 
 # =========================================================================
-# CONDUCTOR SPECIAL CASE HARNESS AND TESTING EXCEPTION
+# CONDUCTOR AND MODULATOR SPECIAL CASE HARNESS AND TESTING EXCEPTION
 # =========================================================================
 
 [[test]]
@@ -63,8 +63,13 @@ name = "gtos-conductor-utility"
 path = "tests/gtos_conductor_harness.rs"
 harness = false
 
+[[bin]]
+name = "gtos-modulator-utility"
+path = "tests/gtos_modulator_harness.rs"
+Test = false
+
 # =========================================================================
-# PHASE 10 TARGET V1 CORE SYSTEMS (THE CHROME CANVAS)
+# PHASE 10 TARGET V1 CORE SYSTEMS (THE SCORE)
 # =========================================================================
 # These define the baseline operational tools to boot the V1 platform.
 # They modulate chaotic inputs into clean, unfragmented 517-byte chords.
@@ -84,35 +89,42 @@ path = "apps/gtos_modulator_core.rs"
 # =========================================================================
 # Future plug-and-play tracking slots for the Instrument Ingestion Framework.
 
-# [[bin]]
-# name = "gtos-instrument-acoustic"
-# path = "apps/gtos_instrument_acoustic.rs"
-# Ingests Speaker/Mic/Voice frequencies directly into 1/φ² compression voids.
+[[bin]]
+name = "gtos-instrument-acoustic"
+path = "apps/gtos_instrument_acoustic.rs"
+test = false
+# Ingests Speaker/Mic/Voice frequencies directly into 1/φ² compression voids [Instrument 0x02].
+
+[[bin]]
+name = "gtos-instrument-intelligence"
+path = "apps/gtos_ai_bridge_universal.rs"
+# Strips LLM model weights of host bloat, mapping parameters directly to silicon cell arrays [Instrument 0x03].
+
+[[bin]]
+name = "gtos-instrument-motherboard"
+path = "apps/gtos_motherboard_core.rs"
+Test = false
+# Interrogates physical chipset buses to map attached hardware architectures [Instrument 0x04].
 
 # [[bin]]
 # name = "gtos-instrument-vision"
 # path = "apps/gtos_instrument_vision.rs"
-# Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads.
+# Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads [Instrument 0x05].
 
 # [[bin]]
 # name = "gtos-instrument-biometrics"
 # path = "apps/gtos_bio_metrics.rs"
-# Maps secure fingerprint, iris, and pulse invariants directly to geometric chords.
+# Maps secure fingerprint, iris, and pulse invariants directly to geometric chords [Instrument 0x06].
 
 # [[bin]]
 # name = "gtos-instrument-robotics"
 # path = "apps/gtos_robot_interface.rs"
-# Routes 3-axis physical voltage metrics to external actuation hardware lanes.
-
-# [[bin]]
-# name = "gtos-instrument-intelligence"
-# path = "apps/gtos_ai_bridge_universal.rs"
-# Strips LLM model weights of host bloat, mapping parameters directly to silicon cell arrays.
+# Routes 3-axis physical voltage metrics to external actuation hardware lanes [Instrument 0x07].
 
 # [[bin]]
 # name = "gtos-instrument-finance"
 # path = "apps/gtos_financial_fix.rs"
-# Translates stock/blockchain message packets straight into geometric chords.
+# Translates stock/blockchain message packets straight into geometric chords [Instrument 0x08].
 
 [dependencies]
 # Natively empty. Proves the zero-overhead/zero-dependency footprint.
