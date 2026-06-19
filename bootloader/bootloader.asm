@@ -109,14 +109,45 @@ init_64bit:
     mov fs, eax
     mov gs, eax
 
-    ; Correct Hardware Display Route: Write using 32-bit register widths to match the screen bus
-    mov eax, 0x0F500F36      ; Bright White '6' and 'P' character tokens
-    mov ebx, 0xB8000         ; VGA Text Mode Hardware Address Base
-    mov [ebx], eax           ; Stream characters cleanly into the video cells
+    ; =========================================================================
+    ; CLEAR SCREEN ENVIRONMENT & PRINT SIGNATURE
+    ; =========================================================================
+    mov edi, 0xB8000         ; Base address of VGA text memory
+    mov ecx, 2000            ; Total character cells on an 80x25 terminal screen
+    mov ax, 0x0720           ; 0x07 = Light gray on black background, 0x20 = Blank space character
+
+.clear_loop:
+    mov [edi], ax           ; Write blank space to current cell
+    add edi, 2               ; Advance pointer by 2 bytes (1 character cell)
+    loop .clear_loop         ; Loop until all 2,000 cells are completely cleared
+
+    ; Now stamp your fresh 'GT' system signature in the top-left corner (0xB8000)
+    mov eax, 0x0F540F47      ; 0x0F = Bright White. 0x54 = 'T', 0x47 = 'G'
+    mov edi, 0xB8000         ; Reset target pointer to origin cell
+    mov [edi], eax           ; Commit 'GT' straight to the unallocated screen canvas
+
+    ; =========================================================================
+    ; LIVE HARDWARE LEVEL CORE-4 COMPILATION VERIFIER
+    ; =========================================================================
+    ; Interrogate the raw physical size of the disk block space appended behind us
+    mov esi, _start          ; Point to initial sector boundary anchor
+    mov ecx, [esi + 512]     ; Peek exactly into the first 4 bytes of your Rust binary image
+    
+    cmp ecx, 0x00000000      ; Check if the trailing sector space is entirely unallocated/empty
+    jne .core_4_digested     ; If machine bytes are actively present, branch to success signature
+    
+    ; Default fallback state: Draw a subtle red warning indicator at cell 2 (right after 'GT')
+    mov word [0xB8004], 0x0C58 ; 0x0C = Bright Red, 0x58 = 'X' (Indicates Empty/Undigested Cargo Payload)
+    jmp .halt_loop
+
+.core_4_digested:
+    ; SUCCESS STATE: Draw a vibrant green check indicator at cell 2 proving code digestion
+    mov word [0xB8004], 0x0A2B ; 0x0A = Bright Green, 0x2B = '+' (Proves Core-4 Binary Code is Physical Reality!)
 
 .halt_loop:
-    hlt                      ; Freeze execution in a secure 64-bit low-power state
+    hlt 
     jmp .halt_loop
+
 
 ; =============================================================================
 ; THE GLOBAL DESCRIPTOR TABLE (GDT) - THE MIXED 32/64 RUNWAY

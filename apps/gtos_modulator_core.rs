@@ -163,30 +163,30 @@ fn package_single_chord(
 // ENTRY TRACKS: PATH SEGREGATION FOR DEV VS. HP ELITEBOOK
 // =========================================================================
 
-/// The explicit entry symbol called directly by the bootloader long-mode handover
-#[cfg(target_os = "none")]
-#[no_mangle]
-pub unsafe extern "C" fn _start() -> ! {
-    let driver = GTOSHALAIComputeDriver::new();
-    let mut executive = GTOSKernelCoreExecutive::new(100_000);
-    let mut mmu = GTOSHalMMU::new();
-    let mut reg_map = GTOSRegisterMap::new();
-
-    // Simulated Large Application Input Stream (e.g., Llama model text payload block)
-    let large_freeware_signal = b"gtos_core_instrument_intelligence_stream_block_alpha_verify_chords";
-
-    // Ingest via Instrument ID 0x03 (Intelligence Bridge Slot)
-    modulate_universal_stream(
-        &driver,
-        &mut executive,
-        &mut mmu,
-        &mut reg_map,
-        0x03,
-        large_freeware_signal,
-    );
-
-    // Fall into a low-power processing state on the physical motherboard loop
-    loop {
-        core::hint::spin_loop();
-    }
-}
+// The explicit entry symbol called directly by the bootloader long-mode handover
+// #[cfg(all(target_os = "none", not(feature = "shell_build")))]
+// #[no_mangle]
+// pub unsafe extern "C" fn _start() -> ! {
+//    let driver = GTOSHALAIComputeDriver::new();
+//    let mut executive = GTOSKernelCoreExecutive::new(100_000);
+//    let mut mmu = GTOSHalMMU::new();
+//    let mut reg_map = GTOSRegisterMap::new();
+//
+//    // Simulated Large Application Input Stream (e.g., Llama model text payload block)
+//    let large_freeware_signal = b"gtos_core_instrument_intelligence_stream_block_alpha_verify_chords";
+//
+//    // Ingest via Instrument ID 0x03 (Intelligence Bridge Slot)
+//    modulate_universal_stream(
+//        &driver,
+//        &mut executive,
+//        &mut mmu,
+//        &mut reg_map,
+//        0x03,
+//        large_freeware_signal,
+//    );
+//
+//    // Fall into a low-power processing state on the physical motherboard loop
+//    loop {
+//        core::hint::spin_loop();
+//    }
+// }

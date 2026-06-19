@@ -79,9 +79,9 @@ name = "gtos-modulator-core"
 path = "apps/gtos_modulator_core.rs"
 # V1 Core Ingestor: Modulates raw byte streams into unallocated 517-byte chords.
 
-# [[bin]]
-# name = "gtos-core-shell"
-# path = "apps/gtos_core_shell.rs"
+[[bin]]
+name = "gtos-core-shell"
+path = "apps/gtos_shell.rs"
 # V1 Core Dashboard: Master zero-allocation diagnostic steering wheel.
 
 # =========================================================================
@@ -106,9 +106,9 @@ path = "apps/gtos_motherboard_core.rs"
 Test = false
 # Interrogates physical chipset buses to map attached hardware architectures [Instrument 0x04].
 
-# [[bin]]
-# name = "gtos-instrument-vision"
-# path = "apps/gtos_instrument_vision.rs"
+[[bin]]
+name = "gtos-instrument-vision"
+path = "apps/gtos_instrument_vision.rs"
 # Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads [Instrument 0x05].
 
 # [[bin]]
@@ -125,6 +125,11 @@ Test = false
 # name = "gtos-instrument-finance"
 # path = "apps/gtos_financial_fix.rs"
 # Translates stock/blockchain message packets straight into geometric chords [Instrument 0x08].
+
+# [[bin]]
+# name = "gtos-instrument-comms"
+# path = "apps/gtos_comms.rs"
+# Leverage existing motherboard instrument to provide GTOS control of all wireless/bluetooth/etc. devices found on the system [Instrument 0x09].
 
 [dependencies]
 # Natively empty. Proves the zero-overhead/zero-dependency footprint.

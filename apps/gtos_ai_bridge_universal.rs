@@ -78,35 +78,35 @@ pub fn stream_intelligence_token(
 // ENTRY TRACKS: SYSTEM LONG-MODE HANDOVER LINKS
 // =========================================================================
 
-/// The explicit entry symbol called directly by the bootloader handover
-#[cfg(target_os = "none")]
-#[no_mangle]
-pub unsafe extern "C" fn _start() -> ! {
-    let driver = GTOSHALAIComputeDriver::new();
-    let mut executive = GTOSKernelCoreExecutive::new(100_000);
-    let mut mmu = GTOSHalMMU::new();
-    let mut reg_map = GTOSRegisterMap::new();
-
-    // Simulated Project GIO stream metrics (Low-drift stable baseline simulation)
-    let sample_kappa = 162_587;   // Stable ratio cluster tracking index from GIO v0.2.0
-    let sample_entropy = 38_382;  // Baseline low-noise entropy collapse limit (0.038382)
-    let sample_variance = 500_000;
-    
-    let sample_llm_token = b"gtos_ai_token_grounded_in_gio_geometry";
-
-    // Stream-flash token to the modulator
-    stream_intelligence_token(
-        &driver,
-        &mut executive,
-        &mut mmu,
-        &mut reg_map,
-        sample_kappa,
-        sample_entropy,
-        sample_variance,
-        sample_llm_token,
-    );
-
-    loop {
-        core::hint::spin_loop();
-    }
-}
+// The explicit entry symbol called directly by the bootloader handover
+// #[cfg(all(target_os = "none", not(feature = "shell_build")))]
+// #[no_mangle]
+// pub unsafe extern "C" fn _start() -> ! {
+//    let driver = GTOSHALAIComputeDriver::new();
+//    let mut executive = GTOSKernelCoreExecutive::new(100_000);
+//    let mut mmu = GTOSHalMMU::new();
+//    let mut reg_map = GTOSRegisterMap::new();
+//
+//    // Simulated Project GIO stream metrics (Low-drift stable baseline simulation)
+//    let sample_kappa = 162_587;   // Stable ratio cluster tracking index from GIO v0.2.0
+//    let sample_entropy = 38_382;  // Baseline low-noise entropy collapse limit (0.038382)
+//   let sample_variance = 500_000;
+//    
+//    let sample_llm_token = b"gtos_ai_token_grounded_in_gio_geometry";
+//
+//    // Stream-flash token to the modulator
+//    stream_intelligence_token(
+//        &driver,
+//        &mut executive,
+//        &mut mmu,
+//        &mut reg_map,
+//        sample_kappa,
+//        sample_entropy,
+//        sample_variance,
+//        sample_llm_token,
+//    );
+//
+//    loop {
+//        core::hint::spin_loop();
+//    }
+// }
