@@ -1,8 +1,24 @@
 // gtos_layer4_harness.rs
 // GTOS Phase 7.2 Objective Layer 4 Robot Driver Integration Test Rig
 
-#![cfg_attr(target_os = "none", no_std)]
-#![cfg_attr(target_os = "none", no_main)]
+// =========================================================================
+// THE FINAL SWITCH: HOOKS FOR LOCAL HOST VERIFICATION VS NATIVE SILICON
+// =========================================================================
+#[cfg(not(target_os = "none"))]
+extern crate std; 
+
+#[cfg(not(target_os = "none"))]
+macro_rules! printl {
+    ($($arg:tt)*) => { std::println!($($arg)*); };
+}
+
+#[cfg(target_os = "none")]
+macro_rules! printl {
+    ($($arg:tt)*) => {
+        // GT-OS Shell routing: Drops into native serial/VGA output on virtual silicon
+        // crate::drivers::serial::print_fmt(format_args!($($arg)*));
+    };
+}
 
 #[path = "../core/gtos_register_map.rs"]
 mod gtos_register_map;
@@ -176,32 +192,32 @@ fn main() {
     // -------------------------------------------------------------------------
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
-    println!("=================================================================");
-    println!("       GTOS METAL-NATIVE LAYER 4 OBJECTIVE ARCHITECTURE TEST     ");
-    println!("=================================================================");
-    println!(
+    printl!("=================================================================");
+    printl!("       GTOS METAL-NATIVE LAYER 4 OBJECTIVE ARCHITECTURE TEST     ");
+    printl!("=================================================================");
+    printl!(
         "[CHECKING] 12-Byte Semantic Token Bridge layout:         {}", 
         if is_bridge_size_valid { "PASS (Lucas Invariant Secure)" } else { "FAIL (Layout Padding Leak)" }
     );
-    println!(
+    printl!(
         "[CHECKING] 15-Byte General Actuator Driver state:        {}", 
         if is_driver_size_valid { "PASS (3-Axis Vector Packed)" } else { "FAIL (Structural Bleed)" }
     );
-    println!(
+    printl!(
         "[CHECKING] Acoustic Coupler Link Emergency Brake Trap:   {}", 
         if is_brake_trap_secured { "PASS (Actuator Voltage Safe-State)" } else { "FAIL (Firewall Bypassed)" }
     );
 
     // RESTORED: Direct visibility of the uncompromised target hash
-    println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
-    println!("   Verified Hardware Hash Token: {}\n", real_signature);
+    printl!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
+    printl!("   Verified Hardware Hash Token: {}\n", real_signature);
 
-    println!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
-    println!("-----------------------------------------------------------------");
-    println!("Option A: \"{}\"", options[0]);
-    println!("Option B: \"{}\"", options[1]);
-    println!("Option C: \"{}\"", options[2]);
-    println!("-----------------------------------------------------------------");
+    printl!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
+    printl!("-----------------------------------------------------------------");
+    printl!("Option A: \"{}\"", options[0]);
+    printl!("Option B: \"{}\"", options[1]);
+    printl!("Option C: \"{}\"", options[2]);
+    printl!("-----------------------------------------------------------------");
 
     } 
 } 

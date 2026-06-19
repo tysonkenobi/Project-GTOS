@@ -84,7 +84,6 @@ pub unsafe extern "C" fn _start() -> ! {
 // =========================================================================
 // PANIC CORES: TARGET DISTRIBUTION FOR HOOD AND METAL SILICON
 // =========================================================================
-
 // 1. The Real Bare-Metal Production Cage (hp EliteBook 8440P)
 #[cfg(target_os = "none")]
 #[panic_handler]
@@ -94,7 +93,8 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 // 2. The Local Dev Mixing Surface (Mac Air Host Monitoring)
-#[cfg(not(target_os = "none"))]
+// THE UN-TORNADO ANCHOR: Added 'not(test)' to prevent host std collisions!
+#[cfg(all(not(target_os = "none"), not(test)))]
 #[panic_handler]
 fn panic_dev(_info: &core::panic::PanicInfo) -> ! {
     // Standard-compatible tight loop fallback for stable toolchains

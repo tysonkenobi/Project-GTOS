@@ -79,10 +79,3 @@ pub unsafe extern "C" fn _start() -> ! {
         core::hint::spin_loop();
     }
 }
-
-// Global panic handler for the bare-metal application layer
-#[cfg(target_os = "none")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}

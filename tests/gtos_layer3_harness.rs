@@ -1,8 +1,27 @@
 // gtos_layer3_harness.rs
 // GTOS Phase 6.7 Objective Layer 3 Executive Core Integration Test Harness
 
+// Put this at the top of the utility harness scripts (e.g., gtos-sysmon-l1)
 #![cfg_attr(target_os = "none", no_std)]
 #![cfg_attr(target_os = "none", no_main)]
+
+// 1. THE HOST DEVELOPMENT ENGINE (For Mac terminal verification)
+#[cfg(not(target_os = "none"))]
+macro_rules! print_suite {
+    ($($arg:tt)*) => {
+        println!($($arg)*); // Native host terminal printing
+    };
+}
+
+// 2. THE NATIVE SILICON UTILITY ENGINE (For the GT-OS Shell Suite)
+#[cfg(target_os = "none")]
+macro_rules! print_suite {
+    ($($arg:tt)*) => {
+        // When running as a native utility tool inside GT-OS, 
+        // this routes straight to your hardware video space (0xB8000) or serial stream
+        // crate::drivers::shell_output::print_fmt(format_args!($($arg)*));
+    };
+}
 
 #[path = "../core/gtos_register_map.rs"]
 mod gtos_register_map;
