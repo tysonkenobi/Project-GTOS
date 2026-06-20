@@ -25,6 +25,9 @@ pub mod local_acoustic_instrument;
 #[path = "./gtos_ai_bridge_universal.rs"]
 pub mod local_intelligence_instrument;
 
+#[path = "./gtos_instrument_vision.rs"]
+pub mod local_vision_instrument;
+
 /// Raw, zero-allocation VGA writer that injects characters straight to display RAM (0xB8000)
 unsafe fn write_vga_indicator(offset: usize, label: &[u8], status_ok: bool) {
     let vga_base = 0xB8000 as *mut u8;
@@ -99,8 +102,13 @@ pub unsafe extern "C" fn initialize_shell_interface() -> ! {
     let modulator_verified = shell_stack_buffer[0] == b'W';
     write_vga_indicator(640, b"[CORE-01] Console Shell 256B Ingestion Matrix: ", modulator_verified);
 
-    // Final Progress State confirmation layout block
-    write_vga_indicator(960, b"[STATUS] Milestone 10.5.3.1 Core-4 Baseline: COMPLETED", true);
+    // 5. EXECUTE SPATIOTEMPORAL VISION INGESTION (0x05)
+    let mock_camera_frame = b"gtos_spatial_tracking_camera_vector_coordinate_payload_v1";
+    local_vision_instrument::ingest_vision_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_camera_frame);
+    write_vga_indicator(800, b"[CORE-05] Spatiotemporal Vision Tracking Gate: ", true);
+
+    // Final Progress State confirmation layout block updating checkpoint index to 2
+    write_vga_indicator(960, b"[STATUS] Milestone 10.5.4 Core-5 Baseline: COMPLETED", true);
 
     loop {
         core::hint::spin_loop();

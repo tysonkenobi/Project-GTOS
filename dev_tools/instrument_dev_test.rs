@@ -50,13 +50,17 @@ fn main() {
     println!("        GTOS HOST PRE-COMPILATION COMPLETE INSTRUMENT MATRIX     ");
     println!("=================================================================");
 
-    // The Master 5-Instrument Cluster Defs for Phase 10.5.4
+    // The Master 7-Instrument Cluster Defs for Phase 10.5.5
     let instruments = [
         InstrumentMeta { id: 0x01, file_name: "apps/gtos_shell.rs", label: "CONSOLE SHELL INTERFACE", hex_flag: "0x01" },
         InstrumentMeta { id: 0x02, file_name: "apps/gtos_instrument_acoustic.rs", label: "ACOUSTIC WAVE ENGINE", hex_flag: "0x02" },
         InstrumentMeta { id: 0x03, file_name: "apps/gtos_ai_bridge_universal.rs", label: "AI CO-PROCESSOR BRIDGE", hex_flag: "0x03" },
         InstrumentMeta { id: 0x04, file_name: "apps/gtos_motherboard_core.rs", label: "MOTHERBOARD BUS DISCOVERY", hex_flag: "0x04" },
         InstrumentMeta { id: 0x05, file_name: "apps/gtos_instrument_vision.rs", label: "SPATIOTEMPORAL VISION TRACK", hex_flag: "0x05" },
+        InstrumentMeta { id: 0x06, file_name: "apps/gtos_bio_metrics.rs", label: "BIOMETRIC VECTOR CORE", hex_flag: "0x06" },
+        InstrumentMeta { id: 0x07, file_name: "apps/gtos_robot_interface.rs", label: "ROBOTICS ACTUATION CONTROLLER", hex_flag: "0x07" },
+        InstrumentMeta { id: 0x08, file_name: "apps/gtos_financial_fix.rs", label: "FINANCIAL SECURE LEDGER", hex_flag: "0x08" },
+        InstrumentMeta { id: 0x09, file_name: "apps/gtos_comms.rs", label: "COMMUNICATIONS COUPLER BUS", hex_flag: "0x09" },
     ];
 
     let mut overall_pass = true;
@@ -92,7 +96,7 @@ fn main() {
     }
 
     println!("-----------------------------------------------------------------");
-    print!("[STATUS] Core-5 Pipeline Evaluation Consensus: ");
+    print!("[STATUS] Core-9 Pipeline Evaluation Consensus: ");
     if overall_pass {
         println!("🟢 METRIC ALIGNED (ALL PASS)");
     } else {

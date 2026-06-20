@@ -103,32 +103,37 @@ path = "apps/gtos_ai_bridge_universal.rs"
 [[bin]]
 name = "gtos-instrument-motherboard"
 path = "apps/gtos_motherboard_core.rs"
-Test = false
+test = false
 # Interrogates physical chipset buses to map attached hardware architectures [Instrument 0x04].
 
 [[bin]]
 name = "gtos-instrument-vision"
 path = "apps/gtos_instrument_vision.rs"
+Test = false
 # Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads [Instrument 0x05].
 
-# [[bin]]
-# name = "gtos-instrument-biometrics"
-# path = "apps/gtos_bio_metrics.rs"
-# Maps secure fingerprint, iris, and pulse invariants directly to geometric chords [Instrument 0x06].
+[[bin]]
+name = "gtos-instrument-biometrics"
+path = "apps/gtos_bio_metrics.rs"
+test = false
+# Maps secure biometrics, fingerprint, iris, and pulse invariants directly to geometric chords [Instrument 0x06].
 
-# [[bin]]
-# name = "gtos-instrument-robotics"
-# path = "apps/gtos_robot_interface.rs"
+[[bin]]
+name = "gtos-instrument-robotics"
+path = "apps/gtos_robot_interface.rs"
+test = false
 # Routes 3-axis physical voltage metrics to external actuation hardware lanes [Instrument 0x07].
 
-# [[bin]]
-# name = "gtos-instrument-finance"
-# path = "apps/gtos_financial_fix.rs"
+[[bin]]
+name = "gtos-instrument-finance"
+path = "apps/gtos_financial_fix.rs"
+test = false
 # Translates stock/blockchain message packets straight into geometric chords [Instrument 0x08].
 
-# [[bin]]
-# name = "gtos-instrument-comms"
-# path = "apps/gtos_comms.rs"
+[[bin]]
+name = "gtos-instrument-comms"
+path = "apps/gtos_comms.rs"
+test = false
 # Leverage existing motherboard instrument to provide GTOS control of all wireless/bluetooth/etc. devices found on the system [Instrument 0x09].
 
 [dependencies]

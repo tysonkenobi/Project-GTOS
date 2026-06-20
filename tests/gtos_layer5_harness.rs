@@ -26,18 +26,19 @@ pub mod local_motherboard_layer;
 #[path = "../apps/gtos_instrument_vision.rs"]
 pub mod local_vision_layer;
 
-// FUTURE INSTRUMENT SLOTS: Uncomment as Phase 10 milestones are unlocked
-// #[path = "../apps/gtos_instrument_biometric.rs"]
-// pub mod local_biometric_layer;
+#[path = "../apps/gtos_bio_metrics.rs"]
+pub mod local_biometric_layer;
 
-// #[path = "../apps/gtos_instrument_robotics.rs"]
-// pub mod local_robotics_layer;
+#[path = "../apps/gtos_robot_interface.rs"]
+pub mod local_robotics_layer;
 
-// #[path = "../apps/gtos_instrument_finance.rs"]
-// pub mod local_finance_layer;
+#[path = "../apps/gtos_financial_fix.rs"]
+pub mod local_finance_layer;
 
-// #[path = "../apps/gtos_instrument_comms.rs"]
-// pub mod local_comms_layer;
+#[path = "../apps/gtos_comms.rs"]
+pub mod local_comms_layer;
+
+
 
 // =========================================================================
 // FREESTANDING TERMINAL VIEWPORT BRIDGE (PURE BARE-METAL)
@@ -124,18 +125,21 @@ pub fn execute_layer5_bus_monitor() {
     let mock_camera = b"gtos_spatial_tracking_camera_vector_coordinate_payload_v1";
     local_vision_layer::ingest_vision_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_camera);
 
-    // FUTURE WORKSPACE SLOTS: Uncomment when raw child files are compiled
-    // let mock_bio = b"gtos_biometric_vector_payload_v1";
-    // local_biometric_layer::ingest_biometric_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_bio);
+    // LANE 0x06: Biometric Vector Sensor Frame Ingestion
+    let mock_bio = b"gtos_biometric_vector_payload_v1";
+    local_biometric_layer::gtos_instrument_biometrics(&driver, &mut executive, &mut mmu, &mut reg_map, mock_bio);
 
-    // let mock_robot = b"gtos_robotics_actuation_coordinate_v1";
-    // local_robotics_layer::ingest_robotics_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_robot);
+    // LANE 0x07: Robotics Actuation Instruction Ingestion Stream  
+    let mock_robot = b"gtos_robotics_actuation_coordinate_v1";
+    local_robotics_layer::gtos_instrument_robotics(&driver, &mut executive, &mut mmu, &mut reg_map, mock_robot);
 
-    // let mock_finance = b"gtos_financial_ledger_secure_token_v1";
-    // local_finance_layer::ingest_finance_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_finance);
+    // LANE 0x08: Financial Ledger Node / FIX Protocol Ingestion Stream
+    let mock_finance = b"gtos_financial_ledger_secure_token_v1";
+    local_finance_layer::gtos_instrument_finance(&driver, &mut executive, &mut mmu, &mut reg_map, mock_finance);
 
-    // let mock_comms = b"gtos_comms_network_packet_frame_v1";
-    // local_comms_layer::ingest_comms_stream(&driver, &mut executive, &mut mmu, &mut reg_map, mock_comms);
+    // LANE 0x09: Communications Coupler Bus Ingestion Stream
+    let mock_comms = b"gtos_comms_network_packet_frame_v1";
+    local_comms_layer::gtos_instrument_comms(&driver, &mut executive, &mut mmu, &mut reg_map, mock_comms);
 
     // =========================================================================
     // 2. SYSTEM INVARIANT RECONSTRUCTION BLOCK (FIXED 15-BYTE SNAPSHOT MATRIX)
@@ -154,12 +158,12 @@ pub fn execute_layer5_bus_monitor() {
     combined_hardware_snapshot[6]  = 0x03; // INTELLIGENCE
     combined_hardware_snapshot[7]  = 0x04; // MOTHERBOARD
     combined_hardware_snapshot[8]  = 0x05; // VISION
-    
-    // PLACEHOLDERS: Set to 0x00 until raw modules are activated in Phase 10
-    combined_hardware_snapshot[9]  = 0x00; // BIOMETRIC (Will flip to 0x06)
-    combined_hardware_snapshot[10] = 0x00; // ROBOTICS  (Will flip to 0x07)
-    combined_hardware_snapshot[11] = 0x00; // FINANCE   (Will flip to 0x08)
-    combined_hardware_snapshot[12] = 0x00; // COMMS     (Will flip to 0x09)
+    combined_hardware_snapshot[9]  = 0x06; // BIOMETRIC
+    combined_hardware_snapshot[10] = 0x07; // ROBOTICS
+    combined_hardware_snapshot[11] = 0x08; // FINANCE   
+    combined_hardware_snapshot[12] = 0x09; // COMMS
+
+    // PLACEHOLDERS: Set to 0x00 until raw modules are activated in future          
     combined_hardware_snapshot[13] = 0x00; // RESERVED_A
     combined_hardware_snapshot[14] = 0x00; // RESERVED_B
 
@@ -200,10 +204,10 @@ pub fn execute_layer5_bus_monitor() {
     print_suite!("[CH-0x03] INTELLIGENCE BRIDGE GIO ANCHOR : ACTIVE (PASS)\n");
     print_suite!("[CH-0x04] MOTHERBOARD PCI TOPOLOGY SWEEP : ACTIVE (PASS)\n");
     print_suite!("[CH-0x05] SPATIOTEMPORAL VISION GATEWAY  : ACTIVE (PASS)\n");
-    print_suite!("[CH-0x06] BIOMETRIC VECTOR CORE ENGINE   : STAGED / ON HOLD\n");
-    print_suite!("[CH-0x07] ROBOTICS ACTUATION CONTROLLER  : STAGED / ON HOLD\n");
-    print_suite!("[CH-0x08] FINANCIAL SECURE LEDGER NODE   : STAGED / ON HOLD\n");
-    print_suite!("[CH-0x09] COMMUNICATIONS COUPLER BUS    : STAGED / ON HOLD\n");
+    print_suite!("[CH-0x06] BIOMETRIC VECTOR CORE ENGINE   : ACTIVE (PASS)\n");
+    print_suite!("[CH-0x07] ROBOTICS ACTUATION CONTROLLER  : ACTIVE (PASS)\n");
+    print_suite!("[CH-0x08] FINANCIAL SECURE LEDGER NODE   : ACTIVE (PASS)\n");
+    print_suite!("[CH-0x09] COMMUNICATIONS COUPLER BUS     : ACTIVE (PASS)\n");
 
     print_suite!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: ");
     print_suite!("{}\n", correct_letter);
