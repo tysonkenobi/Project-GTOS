@@ -104,7 +104,7 @@ fn package_single_chord(
     unsafe {
         let coordinate_payload = executive.system_write_file(mmu, reg_map, payload, 0);
 
-                // -----------------------------------------------------------------
+        // -----------------------------------------------------------------
         // THE 3-CHORD HARMONY ENVELOPE (ZERO-ALLOCATION VECTOR INGESTION)
         // -----------------------------------------------------------------
         // Hardened: Extract values into local stack variables to resolve 
