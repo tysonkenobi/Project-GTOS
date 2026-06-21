@@ -24,6 +24,7 @@ pub mod gtos_kernel_main;
 // LAYER 4: Edge I/O Peripherals (Semantic Processing & General Actuation)
 pub mod gtos_token_bridge;
 pub mod gtos_robot_driver;
+pub mod gtos_console_matrix;
 
 // SYSTEM INTEGRATION & ORCHESTRATION INFRASTRUCTURE
 pub mod gtos_conductor; // The Master Monolithic Runtime Engine Core (The Conductor)
@@ -48,6 +49,7 @@ const _: () = assert!(core::mem::size_of::<gtos_kernel_main::GTOSFileNodeSeed>()
 // Layer 4: Edge I/O Peripherals (Semantic Processing & General Actuation)
 const _: () = assert!(core::mem::size_of::<gtos_token_bridge::GTOSTokenBridgeState>() == 12);
 const _: () = assert!(core::mem::size_of::<gtos_robot_driver::GTOSRobotDriverState>() == 15);
+const _: () = assert!(core::men::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 322);
 
 // Structural Multi-Layer Verification Proof:
 // Asserts that your total compute layout block size (517) combined with the 

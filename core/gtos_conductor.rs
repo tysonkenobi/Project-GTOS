@@ -19,6 +19,7 @@ pub struct GTOSMonolithicHarness {
     pub token_bridge: GTOSSemanticTokenBridge,
     pub robot_driver: GTOSRobotTelemetryDriver,
     pub cycle_counter: u64,
+    pub console_matrix: crate::gtos_console_matrix::GTOSConsoleMatrixState,
 }
 
 impl GTOSMonolithicHarness {
@@ -33,6 +34,10 @@ impl GTOSMonolithicHarness {
             token_bridge: GTOSSemanticTokenBridge::new(),
             robot_driver: GTOSRobotTelemetryDriver::new(),
             cycle_counter: 0,
+
+            // INITIALIZE THE MATRIX ENGINES INTO BASELINE GTOS LAPTOP LAYOUT
+            console_matrix: crate::gtos_console_matrix::GTOSConsoleMatrixState::new(crate::gtos_console_matrix::MatrixLayoutProfile::StandardQWERTY
+            ),
         }
     }
 
@@ -43,14 +48,53 @@ impl GTOSMonolithicHarness {
         Ok(())
     }
 
-    /// Master System Tick: Executes a single, end-to-end multi-layer pipeline cycle
+        /// Master System Tick: Executes a single, end-to-end multi-layer pipeline cycle
     pub unsafe fn execute_system_tick(&mut self, raw_input_signal: &[u8]) {
         self.cycle_counter += 1;
 
+        // =========================================================================
+        // SILICON POLLING INTERCEPT: READ HARDWARE LAPTOP PORT 0x60 DIRECTLY
+        // =========================================================================
+        let scancode: u8;
+        #[cfg(target_arch = "x86_64")]
+        {
+            core::arch::asm!(
+                "in al, dx",
+                in("dx") 0x0060u16,
+                out("al") scancode,
+                options(nomem, nostack, preserves_flags)
+            );
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            scancode = 0; // Safe fallback simulation default value for host dev testing
+        }
+
+        // Pass the raw physical register pulse down to your Layer 4 matrix transformer
+        let translated_character = self.console_matrix.transform_silicon_signal(0x60, scancode);
+
+        // If a clean ASCII character is yielded by the matrix, launch the 517-byte vehicle
+        if let Some(ascii_byte) = translated_character {
+            let human_payload = [ascii_byte];
+
+            // Ingest centrally via Instrument ID 0x01 (Console Input Gate)
+            crate::gtos_modulator_core::modulate_universal_stream(
+                &self.compute_driver,
+                &mut self.executive,
+                &mut self.mmu,
+                &mut self.reg_map,
+                0x01, 
+                &human_payload,
+            );
+        }
+
+        // =========================================================================
+        // CONTINUE STANDARD INSTRUMENT EXECUTION TRACKS
+        // =========================================================================
         // Step 1: Allocate a clean buffer frame on the stack
         let mut buffer_frame = self.compute_driver.allocate_unified_frame();
 
-        // Step 2: Stream raw input tokens (Acoustic audio wave or legacy peripheral interrupts)
+        // Step 2: Stream remaining external signals (Audio waves, network traffic, etc.)
         self.compute_driver.stream_token_to_hardware(&mut buffer_frame, raw_input_signal);
 
         // Step 3: Evaluate semantic trends and monitor the 1-byte phase velocity link lines
@@ -73,7 +117,7 @@ impl GTOSMonolithicHarness {
         schwarzschild[15] = 1_000_000;
         let ricci = [0i64; 16];
 
-        // NEW: Ingest the buffer metrics to increment allocation logs and evaluate system load
+        // Ingest the buffer metrics to increment allocation logs and evaluate system load
         let _compute_status = self.executive.system_ingest_token(
             &self.accelerator,
             &mut self.reg_map,
@@ -90,4 +134,3 @@ impl GTOSMonolithicHarness {
             &past_steps,
         );
     }
-}
