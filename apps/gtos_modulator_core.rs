@@ -5,13 +5,12 @@
 #![no_std]
 #![no_main]
 
-// Force link to gtos_core to pull in the master kernel panic strategy natively
-extern crate gtos_core;
-
-use gtos_core::gtos_hal_ai_compute::{GTOSUnifiedTokenBuffer, GTOSHALAIComputeDriver};
-use gtos_core::gtos_kernel_main::{GTOSKernelCoreExecutive};
-use gtos_core::gtos_hal_mmu::{GTOSHalMMU};
-use gtos_core::gtos_register_map::{GTOSRegisterMap};
+// apps/gtos_modulator_core.rs (Clean Header)
+// By using crate:: directly, it references your sibling modules natively within the library.
+use crate::gtos_hal_ai_compute::{GTOSUnifiedTokenBuffer, GTOSHALAIComputeDriver};
+use crate::gtos_kernel_main::{GTOSKernelCoreExecutive};
+use crate::gtos_hal_mmu::{GTOSHalMMU};
+use crate::gtos_register_map::{GTOSRegisterMap};
 
 /// Rigid application-level layout remapping the 8-byte buffer size variables
 #[repr(C, packed)]
@@ -147,7 +146,7 @@ fn package_single_chord(
         schwarzschild[15] = 1_000_000;
         let ricci = [0i64; 16];
 
-        let accel = gtos_core::gtos_hardware_accelerator::GTOSHardwareAcceleratorInterface::new();
+        let accel = crate::gtos_hardware_accelerator::GTOSHardwareAcceleratorInterface::new();
         
         // Ingest baseline text chord
         let _ = executive.system_ingest_token(&accel, reg_map, &chord_buffer, schwarzschild, ricci);

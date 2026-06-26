@@ -26,6 +26,12 @@ pub mod gtos_token_bridge;
 pub mod gtos_robot_driver;
 pub mod gtos_console_matrix;
 
+// LAYER 5: Master Instrument Deck
+// Maps out-of-tree app layers directly into the unallocated core tree namespace.
+#[path = "../apps/gtos_modulator_core.rs"]
+pub mod gtos_modulator_core;
+
+
 // SYSTEM INTEGRATION & ORCHESTRATION INFRASTRUCTURE
 pub mod gtos_conductor; // The Master Monolithic Runtime Engine Core (The Conductor)
 
@@ -49,7 +55,10 @@ const _: () = assert!(core::mem::size_of::<gtos_kernel_main::GTOSFileNodeSeed>()
 // Layer 4: Edge I/O Peripherals (Semantic Processing & General Actuation)
 const _: () = assert!(core::mem::size_of::<gtos_token_bridge::GTOSTokenBridgeState>() == 12);
 const _: () = assert!(core::mem::size_of::<gtos_robot_driver::GTOSRobotDriverState>() == 15);
-const _: () = assert!(core::mem::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 322);
+const _: () = assert!(core::mem::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 76);
+
+// Layer 5: Master Instrument Layout Footprints
+const _: () = assert!(core::mem::size_of::<gtos_modulator_core::GTOSInstrumentHeader>() == 8);
 
 // Structural Multi-Layer Verification Proof:
 // Asserts that your total compute layout block size (517) combined with the 
@@ -72,9 +81,11 @@ pub unsafe extern "C" fn _start() -> ! {
     // 3. Establish our direct VGA terminal video window anchor (0xB8000)
     let vga_buffer = 0xB8000 as *mut u16;
 
-    // Overwrite the bootloader's '6P' check token with a bright green 'CS'
-    // 0x0A530A43 represents Bright Green 'S' (0x53) and Bright Green 'C' (0x43)
-    *vga_buffer = 0x0A530A43;
+    // Overwrite the bootloader's check token with a bright green 'GT'
+unsafe {
+    *vga_buffer.add(0) = 0x0A47; // Bright Green 'G' (0x47) with Color Attribute (0x0A)
+    *vga_buffer.add(1) = 0x0A54; // Bright Green 'T' (0x54) with Color Attribute (0x0A)
+}
 
     // 4. Fall straight into the master, non-divergent processing cycle
     loop {
@@ -95,10 +106,8 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 // 2. The Local Dev Mixing Surface (Mac Air Host Monitoring)
-// THE UN-TORNADO ANCHOR: Added 'not(test)' to prevent host std collisions!
 #[cfg(all(not(target_os = "none"), not(test)))]
 #[panic_handler]
 fn panic_dev(_info: &core::panic::PanicInfo) -> ! {
-    // Standard-compatible tight loop fallback for stable toolchains
     loop {}
 }

@@ -134,3 +134,4 @@ impl GTOSMonolithicHarness {
             &past_steps,
         );
     }
+}

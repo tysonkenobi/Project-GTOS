@@ -44,15 +44,15 @@ name = "gtos-sysmon-l3"
 path = "tests/gtos_layer3_harness.rs"
 test = false
 
-[[bin]]
+[[test]]
 name = "gtos-sysmon-l4"
 path = "tests/gtos_layer4_harness.rs"
-test = false
+harness = false
 
-[[bin]]
+[[test]]
 name = "gtos-sysmon-l5"
 path = "tests/gtos_layer5_harness.rs"
-test = false
+harness = false
 
 # =========================================================================
 # CONDUCTOR AND MODULATOR SPECIAL CASE HARNESS AND TESTING EXCEPTION
