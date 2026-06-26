@@ -13,6 +13,7 @@ pub const MASK_ALT: u8         = 0x08;
 pub const MASK_META: u8        = 0x10;
 pub const MASK_META_MIC: u8    = 0x20; // Acoustic Instrument Gate Trigger
 pub const SETTING_MIC_PTT: u8  = 0x40; // Push-To-Talk Toggle Selector State
+pub const MASK_EXTENDED_E0: u8 = 0x80; // Extended prefix tracking flag
 
 // =========================================================================
 // STRUCTURAL CONTAINER LAYOUT PROFILES
@@ -55,6 +56,12 @@ pub struct GTOSConsoleMatrixState {
 
 // core/gtos_console_matrix.rs (Refined Implementation TBD)
 impl GTOSConsoleMatrixState {
+    pub fn transform_silicon_signal(&mut self, port: u16, signal_byte: u8) -> Option<u8> {
+        if port == 0x0060 { return
+            self.decode_laptop_scancode(signal_byte); }
+            return None
+        }
+
     pub fn decode_laptop_scancode(&mut self, scancode: u8) -> Option<u8> {
         // Track the extended prefix state as a pseudo-modifier bit flag
         if scancode == 0xE0 {
@@ -280,6 +287,25 @@ impl GTOSConsoleMatrixState {
             (0x31, false) => Some(b'n'), (0x31, true) => Some(b'N'),
             (0x32, false) => Some(b'm'), (0x32, true) => Some(b'M'),
 
+            // System Key Configurations
+	    (0x01, _) => Some(0x1B), //esc
+	    (0x3A, _) => Some(0x14), // caps lock token (DC4)
+	    (0x53, _) => Some(0x7F), // del
+            
+            // Function Keys (F1 - Dialog Blocks)
+            (0x3B, _) => Some(0x80), // F1 
+            (0x3C, _) => Some(0x81), // F2
+            (0x3D, _) => Some(0x82), // F3
+            (0x3E, _) => Some(0x83), // F4
+            (0x3F, _) => Some(0x84), // F5
+            (0x40, _) => Some(0x85), // F6
+            (0x41, _) => Some(0x86), // F7
+            (0x42, _) => Some(0x87), // F8
+            (0x43, _) => Some(0x88), // F9
+            (0x44, _) => Some(0x89), // F10
+            (0x57, _) => Some(0x8A), // F11
+            (0x58, _) => Some(0x8B), // F12
+             
             // Numeric Key Row Layout Characters
             (0x02, false) => Some(b'1'), (0x02, true) => Some(b'!'),
             (0x03, false) => Some(b'2'), (0x03, true) => Some(b'@'),
