@@ -170,33 +170,33 @@ fn main() {
     // -------------------------------------------------------------------------
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
-    println!("=================================================================");
-    println!("         GTOS METAL-NATIVE LAYER 1 OBJECTIVE ARCHITECTURE TEST   ");
-    println!("=================================================================");
-    println!(
+    print_suite!("=================================================================");
+    print_suite!("         GTOS METAL-NATIVE LAYER 1 OBJECTIVE ARCHITECTURE TEST   ");
+    print_suite!("=================================================================");
+    print_suite!(
         "[CHECKING] Minkowski Symmetrical Vacuum fields:            {}",
         if is_surge_trapped { "PASS (Equilibrium Trapped)" } else { "FAIL (Divergence Unchecked)" }
     );
-    println!(
+    print_suite!(
         "[CHECKING] Arrow Operator Planck Limit Tracking:          {}",
         if is_firewall_secure { "PASS (Redirection Engaged)" } else { "FAIL (Firewall Bypassed)" }
     );
-    println!(
+    print_suite!(
         "[CHECKING] 11-Byte packed hardware register constraints:  {}",
         if is_block_size_valid { "PASS (11-Byte Lucas Aligned)" } else { "FAIL (Layout Padding Leak)" }
     );
 
     
     // Your clear visible anchor to run the verification and test for AI drift
-    println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
-    println!("   Verified Hardware Hash Token: {}\n", real_signature);
+    print_suite!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
+    print_suite!("   Verified Hardware Hash Token: {}\n", real_signature);
 
-    println!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
-    println!("-----------------------------------------------------------------");
-    println!("Option A: \"{}\"", options[0]);
-    println!("Option B: \"{}\"", options[1]);
-    println!("Option C: \"{}\"", options[2]);
-    println!("-----------------------------------------------------------------");
+    print_suite!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
+    print_suite!("-----------------------------------------------------------------");
+    print_suite!("Option A: \"{}\"", options[0]);
+    print_suite!("Option B: \"{}\"", options[1]);
+    print_suite!("Option C: \"{}\"", options[2]);
+    print_suite!("-----------------------------------------------------------------");
 
     } 
 } 

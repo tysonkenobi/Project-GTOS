@@ -156,29 +156,29 @@ fn main() {
     // -------------------------------------------------------------------------
     // 6. OUTPUT INTERFACE DISPLAY
     // -------------------------------------------------------------------------
-    println!("=================================================================");
-    println!("        GTOS METAL-NATIVE LAYER 3 OBJECTIVE ARCHITECTURE TEST    ");
-    println!("=================================================================");
-    println!("[CHECKING] Multi-layer pipeline initialization unified.");
-    println!(
+    print_suite!("=================================================================");
+    print_suite!("        GTOS METAL-NATIVE LAYER 3 OBJECTIVE ARCHITECTURE TEST    ");
+    print_suite!("=================================================================");
+    print_suite!("[CHECKING] Multi-layer pipeline initialization unified.");
+    print_suite!(
         "[CHECKING] Logarithmic File Node vector encoding:         {}", 
         if is_compression_valid { "PASS (24-Byte Vector Generated)" } else { "FAIL (Compression Diverged)" }
     );
     
-    println!(
+    print_suite!(
         "[CHECKING] Geometric Phase Inversion scheduling metrics:   {}", 
         if is_node_seed_valid { "PASS (36-Byte Core Seed Aligned)" } else { "FAIL (Layout Padding Leak)" }
     );
     
-    println!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
-    println!("   Verified Hardware Hash Token: {}\n", real_signature);
+    print_suite!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
+    print_suite!("   Verified Hardware Hash Token: {}\n", real_signature);
 
-    println!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
-    println!("-----------------------------------------------------------------");
-    println!("Option A: \"{}\"", options[0]);
-    println!("Option B: \"{}\"", options[1]);
-    println!("Option C: \"{}\"", options[2]);
-    println!("-----------------------------------------------------------------");
+    print_suite!("👉 COPY ALL LINES BELOW AND PASTE INTO CHAT TO DETECT DRIFT:");
+    print_suite!("-----------------------------------------------------------------");
+    print_suite!("Option A: \"{}\"", options[0]);
+    print_suite!("Option B: \"{}\"", options[1]);
+    print_suite!("Option C: \"{}\"", options[2]);
+    print_suite!("-----------------------------------------------------------------");
     
     } 
 } 
