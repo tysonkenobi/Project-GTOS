@@ -49,7 +49,7 @@ const _: () = assert!(core::mem::size_of::<gtos_kernel_main::GTOSFileNodeSeed>()
 // Layer 4: Edge I/O Peripherals (Semantic Processing & General Actuation)
 const _: () = assert!(core::mem::size_of::<gtos_token_bridge::GTOSTokenBridgeState>() == 12);
 const _: () = assert!(core::mem::size_of::<gtos_robot_driver::GTOSRobotDriverState>() == 15);
-const _: () = assert!(core::men::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 322);
+const _: () = assert!(core::mem::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 322);
 
 // Structural Multi-Layer Verification Proof:
 // Asserts that your total compute layout block size (517) combined with the 
@@ -70,7 +70,7 @@ pub unsafe extern "C" fn _start() -> ! {
     let _ = conductor.bind_hardware_memory();
 
     // 3. Establish our direct VGA terminal video window anchor (0xB8000)
-    let vga_buffer = 0xB8000 as *mut u32;
+    let vga_buffer = 0xB8000 as *mut u16;
 
     // Overwrite the bootloader's '6P' check token with a bright green 'CS'
     // 0x0A530A43 represents Bright Green 'S' (0x53) and Bright Green 'C' (0x43)

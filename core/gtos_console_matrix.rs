@@ -1,3 +1,149 @@
+// core/gtos_console_matrix.rs (Part 1 of 2)
+// GT-OS Layer 4 Core Ingestion Asset - Matrix Layout Configurations
+
+#![no_std]
+
+// =========================================================================
+// HARDWARE MODIFIER BITMASKS & SOUND SYSTEM REGISTER SETTINGS
+// =========================================================================
+pub const MASK_LEFT_SHIFT: u8  = 0x01;
+pub const MASK_RIGHT_SHIFT: u8 = 0x02;
+pub const MASK_CTRL: u8        = 0x04;
+pub const MASK_ALT: u8         = 0x08;
+pub const MASK_META: u8        = 0x10;
+pub const MASK_META_MIC: u8    = 0x20; // Acoustic Instrument Gate Trigger
+pub const SETTING_MIC_PTT: u8  = 0x40; // Push-To-Talk Toggle Selector State
+
+// =========================================================================
+// STRUCTURAL CONTAINER LAYOUT PROFILES
+// =========================================================================
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum MatrixLayoutProfile {
+    StandardQWERTY = 0x00,
+    StandardAZERTY = 0x01,
+    StandardQWERTZ = 0x02,
+}
+
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy)]
+pub struct TriadCommandState {
+    pub active_modifier_bitmask: u8,
+    pub break_gate_tripped: u8,
+    pub acoustic_entropy_scalar: i32,
+    pub acoustic_variance_scalar: i32,
+}
+
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy)]
+pub struct GTOSLayer5UXTracking {
+    pub cursor_x: u8,
+    pub cursor_y: u8,
+    pub token_counter: u16,
+    pub clipboard_cache: [u8; 48], // Perfect 55-byte Lucas allocation padding block
+}
+
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy)]
+pub struct GTOSConsoleMatrix {
+    pub last_processed_signal: u8,
+    pub modifier_mask: u8,
+    pub active_profile: MatrixLayoutProfile,
+    pub triad_state: TriadCommandState,
+    pub ux_tracking: GTOSLayer5UXTracking, // Natively nested tracking component
+}
+
+// Remap type-namespace identifier to clear Error E0425
+pub type GTOSConsoleMatrixState = GTOSConsoleMatrix;
+
+// core/gtos_console_matrix.rs (Refined Implementation)
+impl GTOSConsoleMatrixState {
+    pub fn decode_laptop_scancode(&mut self, scancode: u8) -> Option<u8> {
+        // Track the extended prefix state as a pseudo-modifier bit flag
+        if scancode == 0xE0 {
+            self.modifier_mask |= 0x80; // Use high bit of mask as E0 indicator
+            return None;
+        }
+
+        if scancode == self.last_processed_signal {
+            return None;
+        }
+        self.last_processed_signal = scancode;
+
+        match scancode {
+            // --- Modifier Tracking ---
+            0x2A => { self.modifier_mask |= MASK_LEFT_SHIFT; None },
+            0x36 => { self.modifier_mask |= MASK_RIGHT_SHIFT; None },
+            0xAA => { self.modifier_mask &= !MASK_LEFT_SHIFT; None },
+            0xB6 => { self.modifier_mask &= !MASK_RIGHT_SHIFT; None },
+            0x1D => { self.modifier_mask |= MASK_CTRL; None },
+            0x9D => { self.modifier_mask &= !MASK_CTRL; None },
+            0x38 => { self.modifier_mask |= MASK_ALT; None },
+            0xB8 => { self.modifier_mask &= !MASK_ALT; None },
+            
+            // --- Break Code Clear Lane ---
+            code if (code & 0x80) != 0 => {
+                // Clear the E0 indicator on any trailing break code
+                self.modifier_mask &= !0x80;
+                None
+            },
+
+            // --- Make Code Ingestion Lane ---
+            code => {
+                let is_shifted = (self.modifier_mask & (MASK_LEFT_SHIFT | MASK_RIGHT_SHIFT)) != 0;
+                let is_ctrl = (self.modifier_mask & MASK_CTRL) != 0;
+                let is_alt = (self.modifier_mask & MASK_ALT) != 0;
+                let is_meta = (self.modifier_mask & MASK_META) != 0;
+                let is_extended = (self.modifier_mask & 0x80) != 0;
+
+                // Reset extended marker for the next sequence cycle
+                self.modifier_mask &= !0x80;
+
+                // LAYER 1 INTERCEPTS
+                if is_ctrl && is_meta {
+                    match code {
+                        0x48 if is_extended => return Some(0x10), // True Extended Arrow Up
+                        0x50 if is_extended => return Some(0x11), // True Extended Arrow Down
+                        0x19 => return Some(237),                 // Ctrl + Meta + P -> 'φ'
+                        0x1F => return Some(0x12),                 // Ctrl + Meta + S
+                        _ => return None,
+                    }
+                }
+
+                // LAYER 2 INTERCEPTS
+                if is_ctrl {
+                    match code {
+                        0x2E => return Some(0x03), // Ctrl + C
+                        0x2F => return Some(0x16), // Ctrl + V
+                        0x46 => return Some(0xCC), // Ctrl + Break
+                        0x26 => return Some(0x0C), // Ctrl + L
+                        _ => {},
+                    }
+                }
+
+                // LAYER 3 INTERCEPTS
+                if is_alt {
+                    match code {
+                        0x17 => return Some(0x83), // Alt + I
+                        0x32 => return Some(0x84), // Alt + M
+                        0x2F => return Some(0x85), // Alt + V
+                        0x13 => return Some(0x87), // Alt + R
+                        0x2E => return Some(0x89), // Alt + C
+                        _ => return None,
+                    }
+                }
+
+                // LAYER 4 CORE PROFILE MAPPINGS
+                match self.active_profile {
+                    MatrixLayoutProfile::StandardQWERTY => self.map_qwerty_to_ascii(code, is_shifted),
+                    MatrixLayoutProfile::StandardAZERTY => self.map_azerty_to_ascii(code, is_shifted),
+                    MatrixLayoutProfile::StandardQWERTZ => self.map_qwertz_to_ascii(code, is_shifted),
+                }
+            }
+        }
+    }
+}
+
 // core/gtos_console_matrix.rs (Part 2 of 2)
 impl GTOSConsoleMatrixState {
     /// Decodes raw laptop keyboard bytes, tracking modifiers cleanly via explicit masks
