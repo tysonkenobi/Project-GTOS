@@ -41,7 +41,16 @@ pub struct GTOSLayer5UXTracking {
     pub cursor_x: u8,
     pub cursor_y: u8,
     pub token_counter: u16,
-    pub clipboard_cache: [u8; 48], // Perfect X-byte Lucas allocation padding blocks TBD
+    pub clipboard_cache: [u8; 48],
+
+    // =========================================================================
+    // LAYER 5 PLUG-AND-PLAY ACCESSIBILITY & SECURITY GATEWAY (11-BYTE GATEWAY)
+    // =========================================================================
+    // Multi-purpose 11-byte gateway serving three distinct operational modes:
+    // Mode 1 (Security Wall): 11-Byte Rolling Attestation Hash & Cycle Signature
+    // Mode 2 (Hardware Auth): Phase-Velocity Chord Gate Microsecond Jitter Tracker
+    // Mode 3 (State Isolation): Layer 5 Telemetry Anchor Permission Flags
+    pub security_gateway_block: [u8; 11],
 }
 
 #[repr(C, packed)]
@@ -56,6 +65,28 @@ pub struct GTOSConsoleMatrixState {
 
 // core/gtos_console_matrix.rs (Refined Implementation TBD)
 impl GTOSConsoleMatrixState {
+    /// Factory constructor defining a baseline layout profile
+    pub const fn new(profile: MatrixLayoutProfile) -> Self {
+        Self {
+            last_processed_signal: 0,
+            modifier_mask: 0,
+            active_profile: profile,
+            triad_state: TriadCommandState {
+                active_modifier_bitmask: 0,
+                break_gate_tripped: 0,
+                acoustic_entropy_scalar: 0,
+                acoustic_variance_scalar: 0,
+            },
+            ux_tracking: GTOSLayer5UXTracking {
+                cursor_x: 0,
+                cursor_y: 0,
+                token_counter: 0,
+                clipboard_cache: [0; 48],
+                security_gateway_block: [0; 11],
+            },
+        }
+    }
+
     pub fn transform_silicon_signal(&mut self, port: u16, signal_byte: u8) -> Option<u8> {
         if port == 0x0060 { return
             self.decode_laptop_scancode(signal_byte); }
@@ -147,116 +178,9 @@ impl GTOSConsoleMatrixState {
         }
     }
 }
-
-// core/gtos_console_matrix.rs (Part 2 of 2)
-impl GTOSConsoleMatrixState {
-    /// Decodes raw laptop keyboard bytes, tracking modifiers cleanly via explicit masks
-    fn decode_laptop_scancode(&mut self, scancode: u8) -> Option<u8> {
-        if scancode == self.last_processed_signal {
-            return None;
-        }
-        self.last_processed_signal = scancode;
-
-        match scancode {
-            // Track Shift modifier press/release
-            0x2A => { self.modifier_mask |= MASK_LEFT_SHIFT; None },
-            0x36 => { self.modifier_mask |= MASK_RIGHT_SHIFT; None },
-            0xAA => { self.modifier_mask &= !MASK_LEFT_SHIFT; None },
-            0xB6 => { self.modifier_mask &= !MASK_RIGHT_SHIFT; None },
-
-            // Track Ctrl modifier press/release
-            0x1D => { self.modifier_mask |= MASK_CTRL; None },
-            0x9D => { self.modifier_mask &= !MASK_CTRL; None },
-
-            // Track Alt modifier press/release
-            0x38 => { self.modifier_mask |= MASK_ALT; None },
-            0xB8 => { self.modifier_mask &= !MASK_ALT; None },
-
-            // Track Meta Key (Windows/Command Key) press/release
-            0x5B => { 
-                self.modifier_mask |= MASK_META; 
-                let is_continuous = (self.modifier_mask & SETTING_MIC_PTT) != 0;
-                if is_continuous {
-                    self.modifier_mask ^= MASK_META_MIC; // Continuous Mode: Instant Hardware Mute Toggle
-                } else {
-                    self.modifier_mask |= MASK_META_MIC;  // PTT Mode: Holding down opens microphone line
-                }
-                None 
-            },
-            0xDB => { 
-                self.modifier_mask &= !MASK_META; 
-                let is_continuous = (self.modifier_mask & SETTING_MIC_PTT) != 0;
-                if !is_continuous {
-                    self.modifier_mask &= !MASK_META_MIC; // PTT Mode: Releasing closes line instantly
-                }
-                None 
-            },
-
-            // Process Standard Key Press events (Make codes have high bit clear)
-            code if (code & 0x80) == 0 => {
-                let is_shifted = (self.modifier_mask & (MASK_LEFT_SHIFT | MASK_RIGHT_SHIFT)) != 0;
-                let is_ctrl = (self.modifier_mask & MASK_CTRL) != 0;
-                let is_alt = (self.modifier_mask & MASK_ALT) != 0;
-                let is_meta = (self.modifier_mask & MASK_META) != 0;
-
-                // =========================================================================
-                // INTERCEPT LAYER 1: MULTI-MODIFIER ENVIRONMENTAL VARIABLES & TOKENS
-                // =========================================================================
-                if is_ctrl && is_meta {
-                    match code {
-                        0x48 => return Some(0x10), // Ctrl + Meta + Arrow Up: Live-Tune GIO Kappa Up
-                        0x50 => return Some(0x11), // Ctrl + Meta + Arrow Down: Live-Tune GIO Kappa Down
-                        0x19 => return Some(237),  // Ctrl + Meta + P: Instantly yield raw character 237 (φ)
-                        0x1F => return Some(0x12), // Ctrl + Meta + S: Print Screen (Flashes VGA Snapshot Byte)
-                        _ => return None,
-                    }
-                }
-
-                // =========================================================================
-                // INTERCEPT LAYER 2: INDUSTRY-STANDARD SHELL CONTROL COMMANDS
-                // =========================================================================
-                if is_ctrl {
-                    match code {
-                        0x2E => return Some(0x03), // Ctrl + C: Standard Copy (ASCII ETX clipboard command byte)
-                        0x2F => return Some(0x16), // Ctrl + V: Standard Paste (ASCII SYN stream injection byte)
-                        0x46 => return Some(0xCC), // Ctrl + Break/Pause: Triggers 517-byte Terminal Brake chord
-                        0x26 => return Some(0x0C), // Ctrl + L: Form Feed control byte -> Triggers clear screen
-                        _ => {}, 
-                    }
-                }
-
-                // =========================================================================
-                // INTERCEPT LAYER 3: DEDICATED ALT DIALS / INSTRUMENT OVERLAYS
-                // =========================================================================
-                if is_alt {
-                    match code {
-                        0x17 => return Some(0x83), // Alt + I: Local AI Intelligence Performance Overlay [0x03]
-                        0x32 => return Some(0x84), // Alt + M: Motherboard Topology/PCI Bus Map [0x04]
-                        0x2F => return Some(0x85), // Alt + V: Vision Spatial Sensor Tracker Frame [0x05]
-                        0x30 => return Some(0x86), // CALLBACK STUB - Routes to Biometric Status display [0x06]
-                        0x13 => return Some(0x87), // Alt + R: Robotics Kinetic Motor Coordinate Map [0x07]
-                        0x21 => return Some(0x88), // CALLBACK STUB - Routes to Finance Ledger display [0x08]
-                        0x2E => return Some(0x89), // Alt + C: Comms Pipeline Packet Monitor [0x09]
-                        _ => return None,
-                    }
-                }
-
-                // =========================================================================
-                // CORE INTERCEPT LAYER 4: STANDARD REGIONAL QWERTY MATRIX MAPPINGS
-                // =========================================================================
-                match self.active_profile {
-                    MatrixLayoutProfile::StandardQWERTY => self.map_qwerty_to_ascii(code, is_shifted),
-                    MatrixLayoutProfile::StandardAZERTY => self.map_azerty_to_ascii(code, is_shifted),
-                    MatrixLayoutProfile::StandardQWERTZ => self.map_qwertz_to_ascii(code, is_shifted),
-                    _ => None,
-                }
-            },
-
-            _ => None,
-        }
-    }
-
-    /// Complete 1-to-1 US-QWERTY Translation Layout
+    
+    // core/gtos_console_matrix.rs (Part 2 of 2)
+    // Complete 1-to-1 US-QWERTY Translation Layout
     fn map_qwerty_to_ascii(&self, scancode: u8, shifted: bool) -> Option<u8> {
         match (scancode, shifted) {
             // Alphanumeric Text Layout Characters
@@ -366,7 +290,7 @@ impl GTOSConsoleMatrixState {
 
     /// Accessibility Gate
     fn decode_pneumatic_cadence(&mut self, port: u16, timing_byte: u8) -> Option<u8> {
-        if port == 0x68 { 
+        if port == 0x0068 { 
             match timing_byte {
                 1..=50 => Some(b'.'),
                 51..=150 => Some(b'-'),
