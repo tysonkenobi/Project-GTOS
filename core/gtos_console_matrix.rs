@@ -173,7 +173,6 @@ impl GTOSConsoleMatrixState {
                     MatrixLayoutProfile::StandardQWERTY => self.map_qwerty_to_ascii(code, is_shifted),
                     MatrixLayoutProfile::StandardAZERTY => self.map_azerty_to_ascii(code, is_shifted),
                     MatrixLayoutProfile::StandardQWERTZ => self.map_qwertz_to_ascii(code, is_shifted),
-                }
             }
         }
     }

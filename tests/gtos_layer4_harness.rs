@@ -1,22 +1,26 @@
 // gtos_layer4_harness.rs
-// GTOS Phase 10.6 update Objective Layer 4 Robot Driver Integration Test Rig
+// GTOS Phase 10.6 update Objective Layer 4 Test Rig
 
-// =========================================================================
-// THE FINAL SWITCH: HOOKS FOR LOCAL HOST VERIFICATION VS NATIVE SILICON
-// =========================================================================
-#[cfg(not(target_os = "none"))]
-extern crate std; 
+//Layer4 Harness first to call token bridge that reaches through the stack for AI bridge from layer5
+#![no_std]
+extern crate std;
 
+#![cfg_attr(target_os = "none", no_std)]
+#![cfg_attr(target_os = "none", no_main)]
+
+// 1. THE HOST DEVELOPMENT ENGINE (For Mac terminal verification)
 #[cfg(not(target_os = "none"))]
 macro_rules! printl {
-    ($($arg:tt)*) => { std::println!($($arg)*); };
+    ($($arg:tt)*) => {
+        println!($($arg)*); // Map straight to host printing, no extern crate std needed
+    };
 }
 
+// 2. THE NATIVE SILICON UTILITY ENGINE (For the GT-OS Shell Suite)
 #[cfg(target_os = "none")]
 macro_rules! printl {
     ($($arg:tt)*) => {
-        // GT-OS Shell routing: Drops into native serial/VGA output on virtual silicon
-        // crate::drivers::serial::print_fmt(format_args!($($arg)*));
+        // GT-OS Shell routing
     };
 }
 
@@ -48,7 +52,7 @@ use gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
 use gtos_kernel_main::{GTOSKernelCoreExecutive};
 use gtos_token_bridge::{GTOSSemanticTokenBridge};
 use gtos_robot_driver::{GTOSRobotTelemetryDriver};
-use gtos_console_matrix::{GTOSConsoleMatrix, TriadCommandState}; // Imported Console Matrix Structures
+use gtos_console_matrix::{GTOSConsoleMatrixState, MatrixLayoutProfile, TriadCommandState, GTOSLayer5UXTracking}; // Imported Console Matrix Structures
 
 fn calculate_state_fingerprint(bytes: &[u8]) -> u64 {
     let mut hash: u64 = 14695981039346656037;
@@ -72,7 +76,7 @@ fn main() {
     
     let token_bridge = GTOSSemanticTokenBridge::new();
     let robot_driver = GTOSRobotTelemetryDriver::new();
-    let mut console_matrix = GTOSConsoleMatrix::new(); // Initialize 322-byte Matrix State Engine
+    let mut console_matrix = GTOSConsoleMatrixState::new(MatrixLayoutProfile::StandardQWERTY); // Initialize Matrix State Engine
     // Establish stable historical baseline motor steps (X, Y, Z coordinates)
     let previous_motor_steps: [i32; 3] = [5_000, -2_500, 10_000];
 
@@ -97,9 +101,9 @@ fn main() {
     // Phase 10.6 Triad Macro Check: Simulate Ctrl (0x1D) + Meta (0x38) + P (0x19) scancodes
     let mock_scancodes_nominal: [u8; 3] = [0x1D, 0x38, 0x19];
     for &scancode in &mock_scancodes_nominal {
-        console_matrix.process_port_60_scancode(scancode);
+        let _ = console_matrix.transform_silicon_signal(0x0060, scancode);
     }
-    let triad_state_nominal = console_matrix.get_triad_command_state();
+    let triad_state_nominal = console_matrix.triad_state;
 
     // -------------------------------------------------------------------------
     // 3. TEST VECTOR 2: ANOMALY BRAKE TRAP (LINK EXPLOSION RESPONSE)
@@ -126,11 +130,11 @@ fn main() {
     // Phase 10.6 Execution Rupture: Simulate Ctrl (0x1D) + Break (0x46) hardware trap
     let mock_scancodes_panic: [u8; 2] = [0x1D, 0x46];
     for &scancode in &mock_scancodes_panic {
-        console_matrix.process_port_60_scancode(scancode);
+        let _ = console_matrix.transform_silicon_signal(0x0060, scancode);
     }
-    let triad_state_panic = console_matrix.get_triad_command_state();
+    let triad_state_panic = console_matrix.triad_state;
 
-
+// gtos_layer4_harness.rs (Part 2 of 2)
     // -------------------------------------------------------------------------
     // VALIDATION MATRIX: Track structural sizes and safety trap engagement
     // -------------------------------------------------------------------------
@@ -143,11 +147,11 @@ fn main() {
     // True if cutting the 1-byte link successfully forced the driver into an acoustic emergency brake state
     let is_brake_trap_secured = robot_state_spike.brake_flag == 0xFF && robot_state_spike.kinetic_load_factor == 0xFFFF;
 
-    // Phase 10.6 Check: True if Console Matrix matches the precise 322-byte Lucas multiple configuration
-    let is_matrix_size_valid = core::mem::size_of::<gtos_console_matrix::GTOSConsoleMatrix>() == 322;
+    // Phase 10.6 Check: True if Console Matrix matches the precise 76-byte Lucas multiple configuration
+    let is_matrix_size_valid = core::mem::size_of::<gtos_console_matrix::GTOSConsoleMatrixState>() == 76;
     
-    // Phase 10.6 Check: True if Layer 5 UX Tracking Registers sub-component retains exactly 55 bytes
-    let is_l5_tracking_valid = core::mem::size_of::<gtos_console_matrix::GTOSLayer5UXTracking>() == 55;
+    // Phase 10.6 Check: True if Layer 5 UX Tracking Registers sub-component retains exactly 63 bytes
+    let is_l5_tracking_valid = core::mem::size_of::<gtos_console_matrix::GTOSLayer5UXTracking>() == 63;
 
     // -------------------------------------------------------------------------
     // 4. METRIC STATE EXTRACTION & MECHANICAL SNAPSHOT
@@ -158,9 +162,9 @@ fn main() {
     combined_hardware_snapshot[1] = triad_state_nominal.active_modifier_bitmask;      // Active modifier bitmask tracking
     combined_hardware_snapshot[2] = triad_state_panic.break_gate_tripped;             // Break gate status flag (0xFF)
     combined_hardware_snapshot[3] = ifr_byte;                                         // Hardware interrupt state register
-    combined_hardware_snapshot[4] = console_matrix.read_cursor_x_coordinate();        // L5 Tracking Parameter: Cursor X
-    combined_hardware_snapshot[5] = console_matrix.read_cursor_y_coordinate();        // L5 Tracking Parameter: Cursor Y
-    combined_hardware_snapshot[6] = console_matrix.get_active_token_count();          // L5 Tracking Parameter: Token Count
+    combined_hardware_snapshot[4] = console_matrix.ux_tracking.cursor_x;             // L5 Tracking Parameter: Cursor X
+    combined_hardware_snapshot[5] = console_matrix.ux_tracking.cursor_y;              // L5 Tracking Parameter: Cursor Y
+    combined_hardware_snapshot[6] = (console_matrix.ux_tracking.token_counter & 0xFF) as u8;          // L5 Tracking Parameter: Token Count
     combined_hardware_snapshot[7] = buffer_frame.active_token_length as u8;           // 517-byte buffer firewall depth check
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
 
