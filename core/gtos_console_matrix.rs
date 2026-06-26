@@ -40,12 +40,12 @@ pub struct GTOSLayer5UXTracking {
     pub cursor_x: u8,
     pub cursor_y: u8,
     pub token_counter: u16,
-    pub clipboard_cache: [u8; 48], // Perfect 55-byte Lucas allocation padding block
+    pub clipboard_cache: [u8; 48], // Perfect X-byte Lucas allocation padding blocks TBD
 }
 
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
-pub struct GTOSConsoleMatrix {
+pub struct GTOSConsoleMatrixState {
     pub last_processed_signal: u8,
     pub modifier_mask: u8,
     pub active_profile: MatrixLayoutProfile,
@@ -53,10 +53,7 @@ pub struct GTOSConsoleMatrix {
     pub ux_tracking: GTOSLayer5UXTracking, // Natively nested tracking component
 }
 
-// Remap type-namespace identifier to clear Error E0425
-pub type GTOSConsoleMatrixState = GTOSConsoleMatrix;
-
-// core/gtos_console_matrix.rs (Refined Implementation)
+// core/gtos_console_matrix.rs (Refined Implementation TBD)
 impl GTOSConsoleMatrixState {
     pub fn decode_laptop_scancode(&mut self, scancode: u8) -> Option<u8> {
         // Track the extended prefix state as a pseudo-modifier bit flag
