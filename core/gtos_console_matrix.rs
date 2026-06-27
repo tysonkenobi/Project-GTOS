@@ -1,8 +1,6 @@
 // core/gtos_console_matrix.rs (Part 1 of 2)
 // GT-OS Layer 4 Core Ingestion Asset - Matrix Layout Configurations
 
-#![no_std]
-
 // =========================================================================
 // HARDWARE MODIFIER BITMASKS & SOUND SYSTEM REGISTER SETTINGS
 // =========================================================================

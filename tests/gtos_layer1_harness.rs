@@ -29,6 +29,8 @@ mod gtos_register_map;
 mod gtos_hardware_accelerator;
 #[path = "../core/gtos_hal_mmu.rs"]
 mod gtos_hal_mmu;
+#[path = "../core/gtos_hw_telemetry.rs"]
+mod gtos_hw_telemetry;
 
 use gtos_register_map::{GTOSRegisterMap, ManifoldSpinState};
 use gtos_hardware_accelerator::{GTOSHardwareAcceleratorInterface, AccelStatus};
@@ -102,6 +104,25 @@ fn main() {
     let ifr_byte = reg_map.read_register_byte(GTOSRegisterMap::REG_IFR_FLAGS);
     let size_bytes = accelerator.register_footprint_bytes;
 
+    // =========================================================================
+    // PHASE 10.9 HARDWARE TIMING TRAP: BLIND DOUBLE-TEST
+    // =========================================================================
+    // Read 1: Capture initial silicon baseline
+    let clock_baseline = unsafe { gtos_hw_telemetry::GTOSSiliconDiagnostic::read_cycle_stamp() };
+     
+    // Insert execution friction to guarantee a cycle delta on real physical CPU execution pipelines
+    core::hint::spin_loop();
+
+    // Read 2: Capture secondary hardware validation state
+    let clock_validation = unsafe { gtos_hw_telemetry::GTOSSiliconDiagnostic::read_cycle_stamp() };
+
+    // Tier 1 Validation Check: Ensure clock moves forward on native metal, or locks perfectly on host
+    #[cfg(target_arch = "x86_64")]
+    let is_clock_processing = clock_validation > clock_baseline;
+
+    #[cfg(not(target_arch = "x86_64"))]
+    let is_clock_processing = clock_validation == clock_baseline; // Host environment must remain perfectly clamped at 0xFFFFFFFF_FFFFFFFF
+
     // -------------------------------------------------------------------------
     // VALIDATION MATRIX: Track structural footprint and boundary invariants
     // -------------------------------------------------------------------------
@@ -114,8 +135,8 @@ fn main() {
     // True if the MMU correctly tripped the IFR flag register to indicate redirection
     let is_firewall_secure = ifr_byte == 0x03;
 
-    // Expanded 8-byte array tracking for Layer 1 architectural metrics out in the open
-    let mut combined_hardware_snapshot: [u8; 8] = [0; 8];
+    // Hardened Tier 1 State Array expanded to 16 bytes for Phase 10.9 cryptographic binding
+    let mut combined_hardware_snapshot: [u8; 16] = [0; 16];
     combined_hardware_snapshot[0] = ifr_byte;
     combined_hardware_snapshot[1] = size_bytes as u8;
     combined_hardware_snapshot[2] = status_baseline as u8;
@@ -124,6 +145,18 @@ fn main() {
     combined_hardware_snapshot[5] = ((_read_base >> 8) & 0xFF) as u8;
     combined_hardware_snapshot[6] = (_addr & 0xFF) as u8;
     combined_hardware_snapshot[7] = (_time & 0xFF) as u8;
+
+    // =========================================================================
+    // BIT-SHIFT EXTRACTION: PACKING 64-BIT HARDWARE TIMETRACK (INDICES 8-15)
+    // =========================================================================
+    combined_hardware_snapshot[8]  = (clock_baseline & 0xFF) as u8;
+    combined_hardware_snapshot[9]  = ((clock_baseline >> 8) & 0xFF) as u8;
+    combined_hardware_snapshot[10] = ((clock_baseline >> 16) & 0xFF) as u8;
+    combined_hardware_snapshot[11] = ((clock_baseline >> 24) & 0xFF) as u8;
+    combined_hardware_snapshot[12] = ((clock_baseline >> 32) & 0xFF) as u8;
+    combined_hardware_snapshot[13] = ((clock_baseline >> 40) & 0xFF) as u8;
+    combined_hardware_snapshot[14] = ((clock_baseline >> 48) & 0xFF) as u8;
+    combined_hardware_snapshot[15] = ((clock_baseline >> 56) & 0xFF) as u8;
 
     // Calculate uncompromised ground truth cryptographic identifier signature
     let raw_fingerprint = calculate_state_fingerprint(&combined_hardware_snapshot);
@@ -185,7 +218,10 @@ fn main() {
         "[CHECKING] 11-Byte packed hardware register constraints:  {}",
         if is_block_size_valid { "PASS (11-Byte Lucas Aligned)" } else { "FAIL (Layout Padding Leak)" }
     );
-
+    print_suite!(
+    "[CHECKING] Layer 1 Silicon Telemetry Clock Processing: {}",
+    if is_clock_processing { "PASS (Hardware Timing Verifiable)" } else { "FAIL (Timing Stalled/Compromised)" }
+    );
     
     // Your clear visible anchor to run the verification and test for AI drift
     print_suite!("\n🔑 [DEBUG GROUND TRUTH] Correct Target Allocation: {}", correct_letter);
@@ -199,7 +235,7 @@ fn main() {
     print_suite!("-----------------------------------------------------------------");
 
     } 
-} 
+
 
 // Freestanding bare-metal hooks to satisfy the native-metal compiler
 #[cfg(target_os = "none")]
@@ -213,4 +249,5 @@ pub unsafe extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
+}
 }

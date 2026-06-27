@@ -2,9 +2,6 @@
 // GTOS Phase 10.4 Universal Ingestion Engine & Modulator Core
 // Status: APPROVED UNIVERSAL STREAM TRANSDUCER (COMPILABLE EXCLUSIVELY FOR EMBEDDED TARGET/SHELL)
 
-#![no_std]
-#![no_main]
-
 // apps/gtos_modulator_core.rs (Clean Header)
 // By using crate:: directly, it references your sibling modules natively within the library.
 use crate::gtos_hal_ai_compute::{GTOSUnifiedTokenBuffer, GTOSHALAIComputeDriver};

@@ -12,6 +12,7 @@
 pub mod gtos_register_map;
 pub mod gtos_hardware_accelerator;
 pub mod gtos_hal_mmu;
+pub mod gtos_hw_telemetry;
 
 // LAYER 2: Unified Storage Buffering & Core FFI Bridges
 pub mod gtos_hal_ai_compute;
@@ -21,19 +22,18 @@ pub mod gtos_ffi_bridge;
 pub mod gtos_void_compressor;
 pub mod gtos_kernel_main;
 
-// LAYER 4: Edge I/O Peripherals (Semantic Processing & General Actuation)
-pub mod gtos_token_bridge;
+// LAYER 4: Edge I/O Peripherals (Semantic Processing & General Actuation) - TIER 2 TESTING BLUEPRINT BEGINS
+pub mod gtos_token_bridge; // Reaches across to layer 5 as a plug for AI tokenization digestion
 pub mod gtos_robot_driver;
 pub mod gtos_console_matrix;
 
 // LAYER 5: Master Instrument Deck
-// Maps out-of-tree app layers directly into the unallocated core tree namespace.
+// Maps out-of-tree app layers directly into the unallocated core tree namespace through instrument ID.
 #[path = "../apps/gtos_modulator_core.rs"]
 pub mod gtos_modulator_core;
 
-
 // SYSTEM INTEGRATION & ORCHESTRATION INFRASTRUCTURE
-pub mod gtos_conductor; // The Master Monolithic Runtime Engine Core (The Conductor)
+pub mod gtos_conductor; // The Master Monolithic Runtime Engine Core (The Conductor) or Executive Kernel
 
 // =========================================================================
 // MASTER CRATE-LEVEL STRUCTURAL FOOTPRINT ASSERTION MATRIX
@@ -43,6 +43,7 @@ pub mod gtos_conductor; // The Master Monolithic Runtime Engine Core (The Conduc
 
 // Layer 1: Core Bus Width
 const _: () = assert!(core::mem::size_of::<gtos_hardware_accelerator::GTOSAcceleratorControlBlock>() == 11);
+const _: () = assert!(core::mem::size_of::<gtos_hw_telemetry::GTOSSiliconDiagnostic>() == 0); // Enforce zero-sized physical register layer
 
 // Layer 2: Memory Buffers & API Interop Bridges
 const _: () = assert!(core::mem::size_of::<gtos_hal_ai_compute::GTOSUnifiedTokenBuffer>() == 517);

@@ -48,9 +48,19 @@ impl GTOSMonolithicHarness {
         Ok(())
     }
 
-        /// Master System Tick: Executes a single, end-to-end multi-layer pipeline cycle
+    /// Master System Tick: Executes a single, end-to-end multi-layer pipeline cycle
     pub unsafe fn execute_system_tick(&mut self, raw_input_signal: &[u8]) {
-        self.cycle_counter += 1;
+        // =========================================================================
+        // LAYER 1 SILICON CLOCK BINDING: FETCH REAL TIME STAMP COUNTER
+        // =========================================================================
+        #[cfg(target_arch = "x86_64")]
+        {
+            self.cycle_counter = crate::gtos_hw_telemetry::GTOSSiliconDiagnostic::read_cycle_stamp();
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            self.cycle_counter = 0xFFFFFFFF_FFFFFFFF;
+        }
 
         // =========================================================================
         // SILICON POLLING INTERCEPT: READ HARDWARE LAPTOP PORT 0x60 DIRECTLY
