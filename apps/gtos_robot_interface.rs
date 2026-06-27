@@ -2,15 +2,10 @@
 // GTOS Phase 10.5.6 Robotics & Physical Actuation Instrument
 // Status: APPROVED TIER I HARDWARE BOUNDARY GATE (COMPILABLE EXCLUSIVELY FOR EMBEDDED TARGET/SHELL)
 
-#![no_std]
-#![no_main]
-
-extern crate gtos_core;
-
-use gtos_core::gtos_hal_ai_compute::GTOSHALAIComputeDriver;
-use gtos_core::gtos_kernel_main::GTOSKernelCoreExecutive;
-use gtos_core::gtos_hal_mmu::GTOSHalMMU;
-use gtos_core::gtos_register_map::GTOSRegisterMap;
+use crate::gtos_hal_ai_compute::GTOSHALAIComputeDriver;
+use crate::gtos_kernel_main::GTOSKernelCoreExecutive;
+use crate::gtos_hal_mmu::GTOSHalMMU;
+use crate::gtos_register_map::GTOSRegisterMap;
 
 /// Core API: Intercepts raw outbound mechanical instructions or multi-axis joint vectors 
 /// and stream-flashes them through the universal modulator under Instrument ID 0x07.

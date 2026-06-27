@@ -2,16 +2,10 @@
 // GTOS Phase 10.5 Primary Motherboard Chipset & Bus Discovery Instrument
 // Status: APPROVED TIER I HARDWARE BOUNDARY GATE (COMPILABLE EXCLUSIVELY FOR EMBEDDED TARGET/SHELL)
 
-#![no_std]
-#![no_main]
-
-// Force link to gtos_core to pull in the centralized kernel panic strategy natively
-extern crate gtos_core;
-
-use gtos_core::gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
-use gtos_core::gtos_kernel_main::{GTOSKernelCoreExecutive};
-use gtos_core::gtos_hal_mmu::{GTOSHalMMU};
-use gtos_core::gtos_register_map::{GTOSRegisterMap};
+use crate::gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
+use crate::gtos_kernel_main::{GTOSKernelCoreExecutive};
+use crate::gtos_hal_mmu::{GTOSHalMMU};
+use crate::gtos_register_map::{GTOSRegisterMap};
 
 /// Bare-Metal Hardware Intrinsic: Low-level 32-bit I/O address configuration write
 unsafe fn pci_config_write_address(address: u32) {

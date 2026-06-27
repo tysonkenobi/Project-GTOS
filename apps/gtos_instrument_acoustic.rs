@@ -2,15 +2,10 @@
 // GTOS Phase 10.5 Secondary Acoustic Wave Frequency Ingestion Instrument
 // Status: APPROVED TIER I HARDWARE BOUNDARY GATE (COMPILABLE EXCLUSIVELY FOR EMBEDDED TARGET/SHELL)
 
-#![no_std]
-#![no_main]
-
-extern crate gtos_core;
-
-use gtos_core::gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
-use gtos_core::gtos_kernel_main::{GTOSKernelCoreExecutive};
-use gtos_core::gtos_hal_mmu::{GTOSHalMMU};
-use gtos_core::gtos_register_map::{GTOSRegisterMap};
+use crate::gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
+use crate::gtos_kernel_main::{GTOSKernelCoreExecutive};
+use crate::gtos_hal_mmu::{GTOSHalMMU};
+use crate::gtos_register_map::{GTOSRegisterMap};
 
 /// Core API: Intercepts raw microphone DMA audio waves and stream-flashes them to modulation
 pub fn ingest_acoustic_stream(
