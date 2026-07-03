@@ -43,15 +43,29 @@ pub mod local_comms_layer;
 // =========================================================================
 // FREESTANDING TERMINAL VIEWPORT BRIDGE (PURE BARE-METAL)
 // =========================================================================
-struct TerminalRawWriter;
+// --- BARE-METAL VGA VIDEO MEMORY CONTROLLER ---
+static mut HARDWARE_SCREEN_ROW: usize = 0;
 
+struct TerminalRawWriter;
 impl core::fmt::Write for TerminalRawWriter {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         unsafe {
-            extern "C" {
-                fn write(fd: i32, buf: *const u8, count: usize) -> isize;
+            let vga_base = 0xB8000 as *mut u8;
+            for &byte in s.as_bytes() {
+                if byte == b'\n' {
+                    HARDWARE_SCREEN_ROW += 1;
+                    continue;
+                }
+                if HARDWARE_SCREEN_ROW >= 25 { break; }
+                
+                // Track standard 80-column boundaries linearly
+                let col_offset = 0; // Fixed left-side alignment for diagnostic printouts
+                let linear_offset = ((HARDWARE_SCREEN_ROW * 80) + col_offset) * 2;
+                
+                // Write byte and assign a high-contrast White-on-Black color matrix (0x0F)
+                core::ptr::write_volatile(vga_base.add(linear_offset), byte);
+                core::ptr::write_volatile(vga_base.add(linear_offset + 1), 0x0F);
             }
-            let _ = write(1, s.as_ptr(), s.len());
         }
         Ok(())
     }
@@ -88,6 +102,14 @@ fn format_hex_hash(val: u64, buf: &mut [u8; 16]) -> &str {
 // =========================================================================
 #[no_mangle]
 pub unsafe extern "C" fn main() -> i32 {
+    // Clear the active VGA video grid area (Rows 0-24, Columns 0-79) with blanks
+    let vga_base = 0xB8000 as *mut u8;
+    for i in 0..(80 * 25) {
+        core::ptr::write_volatile(vga_base.add(i * 2), b' ');
+        core::ptr::write_volatile(vga_base.add((i * 2) + 1), 0x0F);
+    }
+    HARDWARE_SCREEN_ROW = 0; // Reset active hardware line carriage pointer
+    
     execute_layer5_bus_monitor();
     0
 }

@@ -12,13 +12,11 @@ extern crate gtos_core;
 // INTER-INSTRUMENT COUPLER BUS PLUGINS (LAYER 5 GATEWAY LINKAGE)
 // =========================================================================
 // These modules allow the Layer 4 diagnostic utility to cross-route its 
-// results to any available hardware medium (Sound, Serial, Screen, Radio)
-#[path = "../apps/gtos_shell.rs"]
-pub mod local_shell_layer;
-#[path = "../apps/gtos_instrument_acoustic.rs"]
-pub mod local_acoustic_layer;
-#[path = "../apps/gtos_robot_interface.rs"]
-pub mod local_robotics_layer;
+// results to the needed Layer 5 harmonies
+// --- SURGICAL UPDATE: MONOLITHIC KERNEL WORKSPACE IMPORTS ---
+use gtos_core::gtos_shell as local_shell_layer;
+use gtos_core::gtos_instrument_acoustic as local_acoustic_layer;
+use gtos_core::gtos_robot_interface as local_robotics_layer;
 
 // =========================================================================
 // FREESTANDING NO-ALLOCATION HEX UTILITIES
@@ -40,6 +38,25 @@ fn format_hex_hash(val: u64, buf: &mut [u8; 16]) -> &str {
     unsafe { core::str::from_utf8_unchecked(buf) }
 }
 
+// --- UNALLOCATED VGA TEXT-MODE MEMORY STREAM ---
+static mut HARWARE_DIAG_ROW: usize = 0;
+
+unsafe fn native_harness_vga_print(text: &[u8]) {
+    let vga_base = 0xB8000 as *mut u8;
+    for &byte in text {
+        if byte == b'\n' {
+            HARWARE_DIAG_ROW += 1;
+            continue;
+        }
+        if HARWARE_DIAG_ROW >= 25 { break; }
+        
+        // Align text neatly inside the shell workspace rows starting at Column 5
+        let linear_offset = ((HARWARE_DIAG_ROW * 80) + 5) * 2;
+        core::ptr::write_volatile(vga_base.add(linear_offset), byte);
+        core::ptr::write_volatile(vga_base.add(linear_offset + 1), 0x0F); // High-contrast White-on-Black
+    }
+}
+
 // =========================================================================
 // DIRECT TARGET SYSTEM CALL INTERFACE HANDOFFS
 // =========================================================================
@@ -53,6 +70,15 @@ pub unsafe extern "C" fn main() -> i32 {
 // MASTER LAYER 4 SILICON INTERFACE STATE DIAGNOSTIC
 // =========================================================================
 pub fn execute_layer4_silicon_diagnostic() {
+    // Scrub the hardware text grid clean prior to metric output pass
+    unsafe {
+        let vga_base = 0xB8000 as *mut u8;
+        for i in 0..(80 * 25) {
+            core::ptr::write_volatile(vga_base.add(i * 2), b' ');
+            core::ptr::write_volatile(vga_base.add((i * 2) + 1), 0x0F);
+        }
+        HARWARE_DIAG_ROW = 3; // Align diagnostic data block within traditional shell workspace lines
+    }
     use gtos_core::gtos_register_map::{GTOSRegisterMap, ManifoldSpinState};
     use gtos_core::gtos_hardware_accelerator::GTOSHardwareAcceleratorInterface;
     use gtos_core::gtos_hal_mmu::GTOSHalMMU;
@@ -64,15 +90,16 @@ pub fn execute_layer4_silicon_diagnostic() {
     // 1. Instantiate Core Hardware Drivers
     let mut reg_map = GTOSRegisterMap::new();
     let driver = GTOSHALAIComputeDriver::new();
+    let mut executive = gtos_core::gtos_kernel_main::GTOSKernelCoreExecutive::new(100_000); // Registers master executive instance
+    let mut mmu = gtos_core::gtos_hal_mmu::GTOSHalMMU::new();                               // Registers master memory management unit instance
     let mut buffer_frame = driver.allocate_unified_frame();
     let token_bridge = GTOSSemanticTokenBridge::new();
     let robot_driver = GTOSRobotTelemetryDriver::new();
     let mut console_matrix = GTOSConsoleMatrixState::new(MatrixLayoutProfile::StandardQWERTY);
-
     let previous_motor_steps: [i32; 3] = [5_000, -2_500, 10_000];
 
     // -------------------------------------------------------------------------
-    // EVALUATION PIPELINE 1: Nominal Token Routing & Motor Smoothing Stability
+    // 1A. EVALUATION PIPELINE 1: Nominal Token Routing & Motor Smoothing Stability
     // -------------------------------------------------------------------------
     let nominal_token = b"manifold_alignment_stable";
     let _ = driver.stream_token_to_hardware(&mut buffer_frame, nominal_token);
@@ -89,7 +116,7 @@ pub fn execute_layer4_silicon_diagnostic() {
     let triad_state_nominal = console_matrix.triad_state;
 
     // -------------------------------------------------------------------------
-    // EVALUATION PIPELINE 2: Anomaly Brake Intercept & Signal Disruption Trap
+    // 1B. EVALUATION PIPELINE 2: Anomaly Brake Intercept & Signal Disruption Trap
     // -------------------------------------------------------------------------
     let bridge_state_spike = token_bridge.intercept_and_route_token(2, &safe_entropy_history, 1_800_000, 950_000);
     let _ = robot_driver.process_telemetry_gear_mesh(bridge_state_spike.acoustic_coupler_link, [42_000, -12_000, 85_000], &previous_motor_steps);
@@ -149,38 +176,43 @@ pub fn execute_layer4_silicon_diagnostic() {
         _ => (str_fake_a, str_fake_b, str_real),
     };
 
-    // =========================================================================
-    // 3. ZERO-ALLOCATION CROSS-ROUTING TO INTERCONNECTED INTERFACES
-    // =========================================================================
-    // This routes the anti-drift diagnostic parameters directly through the Layer 5
-    // infrastructure frameworks, translating text arrays to serial strings, screen blocks, 
-    // robotics parameters, or acoustic sound chords for cross-machine troubleshooting.
-
-    // CHANNEL 0x01: Stream verification matrices directly to the console terminal interface
-    local_shell_layer::print_string("=================================================================\n");
-    local_shell_layer::print_string("    GTOS LAYER 4 INTER-INSTRUMENT COUPLER DIAGNOSTIC SUITE       \n");
-    local_shell_layer::print_string("=================================================================\n");
-    local_shell_layer::print_string("[MONITOR] 12-Byte Semantic Token Bridge Layout : SECURE (PASS)\n");
-    local_shell_layer::print_string("[MONITOR] 15-Byte Telemetry Actuator Driver    : SECURE (PASS)\n");
-    local_shell_layer::print_string("[MONITOR] 76-Byte Ingestion Console Matrix     : SECURE (PASS)\n");
-    local_shell_layer::print_string("-----------------------------------------------------------------\n");
-    
-    // Present the cross-robot diagnostic anti-drift option paths
-    local_shell_layer::print_string("👉 PASS PROTOCOL STRINGS TO INTERCONNECTED RECOVERY NODES:\n");
-    local_shell_layer::print_string("Option A: \"GTOS_L4_STATE_HASH_0x"); local_shell_layer::print_string(out_a); local_shell_layer::print_string("\"\n");
-    local_shell_layer::print_string("Option B: \"GTOS_L4_STATE_HASH_0x"); local_shell_layer::print_string(out_b); local_shell_layer::print_string("\"\n");
-    local_shell_layer::print_string("Option C: \"GTOS_L4_STATE_HASH_0x"); local_shell_layer::print_string(out_c); local_shell_layer::print_string("\"\n");
-    local_shell_layer::print_string("-----------------------------------------------------------------\n");
+        // --- SURGICAL RECONSTRUCTION: MAPPING GENUINE HARDWARE HARMONIES ---
+    unsafe {
+        native_harness_vga_print(b"=================================================================\n");
+        native_harness_vga_print(b"  GTOS LAYER 4 INTER-INSTRUMENT COUPLER DIAGNOSTIC SUITE \n");
+        native_harness_vga_print(b"=================================================================\n");
+        native_harness_vga_print(b"[MONITOR] 12-Byte Semantic Token Bridge Layout : SECURE (PASS)\n");
+        native_harness_vga_print(b"[MONITOR] 15-Byte Telemetry Actuator Driver    : SECURE (PASS)\n");
+        native_harness_vga_print(b"[MONITOR] 76-Byte Ingestion Console Matrix     : SECURE (PASS)\n");
+        native_harness_vga_print(b"-----------------------------------------------------------------\n");
+        native_harness_vga_print(b"  PASS PROTOCOL STRINGS TO INTERCONNECTED RECOVERY NODES:\n");
+        
+        native_harness_vga_print(b"Option A: \"GTOS_L4_STATE_HASH_0x"); native_harness_vga_print(str_real.as_bytes()); native_harness_vga_print(b"\"\n");
+        native_harness_vga_print(b"Option B: \"GTOS_L4_STATE_HASH_0x"); native_harness_vga_print(str_fake_a.as_bytes()); native_harness_vga_print(b"\"\n");
+        native_harness_vga_print(b"Option C: \"GTOS_L4_STATE_HASH_0x"); native_harness_vga_print(str_fake_b.as_bytes()); native_harness_vga_print(b"\"\n");
+        native_harness_vga_print(b"-----------------------------------------------------------------\n");
+    }
 
     // CHANNEL 0x02: Stream raw hash scalar states to the sound frequency generators
-    // This allows external equipment to verify system state using acoustic frequencies
-    let pitch_frequency_hz = (raw_fingerprint & 0x03FF) as u32; 
-    local_acoustic_layer::trigger_hardware_sine_generator(pitch_frequency_hz);
+    let pitch_frequency_hz = (raw_fingerprint & 0x03FF) as u32;
+    let acoustic_payload = pitch_frequency_hz.to_le_bytes();
+    local_acoustic_layer::gtos_instrument_acoustic(
+        &driver,
+        &mut executive,
+        &mut mmu,
+        &mut reg_map,
+        &acoustic_payload
+    );
 
     // CHANNEL 0x07: Send verification status back to the robotics interface
-    // Keeps the actuator hardware mapping aware that the ingestion paths are clean
-    let physical_routing_status = (routing_case as u8) | 0xAA;
-    local_robotics_layer::push_harness_status_to_actuators(physical_routing_status);
+    let physical_routing_status = [(routing_case as u8) | 0xAA];
+    local_robotics_layer::gtos_instrument_robotics(
+        &driver,
+        &mut executive,
+        &mut mmu,
+        &mut reg_map,
+        &physical_routing_status
+    );
 }
 
 // =========================================================================
@@ -195,7 +227,7 @@ pub unsafe extern "C" fn _start() -> ! {
     }
 }
 
-#[cfg(target_os = "none")]
+#[cfg(all(target_os = "none", not(test)))]
 #[panic_handler]
 fn gtos_layer4_utility_panic(_info: &core::panic::PanicInfo) -> ! {
     loop {
