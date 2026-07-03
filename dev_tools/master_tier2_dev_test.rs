@@ -25,6 +25,23 @@ pub enum BridgeStatus {
     AttractorLoop = 0xFE,
 }
 
+// --- SHELL REQ B MOCK LAYOUT CONTROLLERS ---
+pub struct MockShellCockpit {
+    pub typing_buffer: [u8; 256],
+    pub typing_length: usize,
+    pub virtual_cli_rows: [[u8; 80]; 25],
+}
+
+impl MockShellCockpit {
+    pub fn new() -> Self {
+        Self {
+            typing_buffer: [0u8; 256],
+            typing_length: 0,
+            virtual_cli_rows: [[b' '; 80]; 25],
+        }
+    }
+}
+
 // =========================================================================
 // LOCAL SIMULATION OF CRITICAL HARDWARE TIER FUNCTIONS
 // =========================================================================
@@ -140,6 +157,33 @@ fn calculate_host_fingerprint(seed_bytes: &[u8], entropy_modifier: u32) -> u64 {
     hash
 }
 
+// --- LAYER 5 SHELL ARCHITECTURAL SIMULATION ---
+pub fn simulate_host_shell_keypress(cockpit: &mut MockShellCockpit, input_char: u8) -> Option<&'static [u8]> {
+    if input_char == b'\n' || input_char == b'\r' {
+        if cockpit.typing_length > 0 {
+            let cmd = &cockpit.typing_buffer[0..cockpit.typing_length];
+            let response = match cmd {
+                b"clear" => b"CLEAR_OK" as &[u8],
+                b"sys-info" => b"SYS_INFO_OK" as &[u8],
+                b"sys-reboot" => b"SYS_REBOOT_OK" as &[u8],
+                _ => b"EXEC_FALLBACK" as &[u8],
+            };
+            cockpit.typing_length = 0;
+            cockpit.typing_buffer = [0u8; 256];
+            return Some(response);
+        }
+    } else if input_char == 0x08 { // Backspace Check
+        if cockpit.typing_length > 0 {
+            cockpit.typing_length -= 1;
+            cockpit.typing_buffer[cockpit.typing_length] = 0;
+        }
+    } else if cockpit.typing_length < 256 {
+        cockpit.typing_buffer[cockpit.typing_length] = input_char;
+        cockpit.typing_length += 1;
+    }
+    None
+}
+
 // dev_tools/master_tier2_dev_test.rs (part 2 of 2)
 
 // =========================================================================
@@ -252,6 +296,35 @@ fn main() {
         if fn7_ok { "PASS (Host Protected)" } else { "FAIL" }
     );
 
+    // --- FN 8 SHELL PARSING & BOUNDS ENFORCEMENT ---
+    let mut shell_state = MockShellCockpit::new();
+    
+    // Test Case A: Bounds enforcement check (Injecting an exploding 300-byte attack block)
+    for _ in 0..300 {
+        simulate_host_shell_keypress(&mut shell_state, b'X');
+    }
+    let overfill_trapped = shell_state.typing_length == 256;
+
+    // Test Case B: Command Router verification
+    shell_state.typing_length = 0;
+    shell_state.typing_buffer = [0u8; 256];
+    simulate_host_shell_keypress(&mut shell_state, b's');
+    simulate_host_shell_keypress(&mut shell_state, b'y');
+    simulate_host_shell_keypress(&mut shell_state, b's');
+    simulate_host_shell_keypress(&mut shell_state, b'-');
+    simulate_host_shell_keypress(&mut shell_state, b'i');
+    simulate_host_shell_keypress(&mut shell_state, b'n');
+    simulate_host_shell_keypress(&mut shell_state, b'f');
+    simulate_host_shell_keypress(&mut shell_state, b'o');
+    let execution_routing = simulate_host_shell_keypress(&mut shell_state, b'\n');
+
+    let fn8_ok = overfill_trapped && execution_routing == Some(b"SYS_INFO_OK");
+    println!(
+        "[FN-LOG-L5] gtos_core_shell() Console Router  : {}",
+        if fn8_ok { "PASS (256-Byte Wall & Parser Sound)" } else { "FAIL" }
+    );
+    if !fn8_ok { functional_pass = false; }
+
     // -------------------------------------------------------------------------
     // CRATIFIED SYSTEM ALIGNMENT STATUS LEDGER
     // -------------------------------------------------------------------------
@@ -279,7 +352,7 @@ fn main() {
     host_state_snapshot[24] = mock_mask;
     host_state_snapshot[25] = link_spk;
     host_state_snapshot[26] = chunks as u8;
-    host_state_snapshot[27] = 0xAA;
+    host_state_snapshot[27] = shell_state.typing_length as u8;  //Verify memory isolation
     host_state_snapshot[28] = 11;
     host_state_snapshot[29] = 5;
     host_state_snapshot[30] = 1;

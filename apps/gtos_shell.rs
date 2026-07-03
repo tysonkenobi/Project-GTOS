@@ -2,8 +2,8 @@
 // GTOS Phase 10.7 Conversational Shell Interface Master Target
 // Status: APPROVED PHASE 10.7 UNFRAGMENTED PRODUCTION CANOPY (NO_STD / NO_MAIN)
 
-#![no_std]
-#![no_main]
+#![no_std]     //To be removed 
+#![no_main]    //To be removed
 
 extern crate gtos_core;
 
