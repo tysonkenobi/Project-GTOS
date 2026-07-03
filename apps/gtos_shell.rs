@@ -169,6 +169,50 @@ pub fn ingest_shell_command(
     local_modulator_core::modulate_universal_stream(driver, executive, mmu, reg_map, 0x01, raw_text_buffer);
 }
 
+//  =========================================================================
+//  MONITORING CONDUCTOR FOR KEYBOARD/INPUT DEVICE ACTIVITY
+//  =========================================================================
+
+pub unsafe fn process_live_system_inputs(
+    reg_map: &GTOSRegisterMap,
+    executive: &mut GTOSKernelCoreExecutive,
+) {
+    // 1. READ REAL LOW-LEVEL SYSTEM STATUS REGISTER STATE
+    // We check the raw interrupt flags byte at offset 0x02 (REG_IFR_FLAGS)
+    let status_flags = reg_map.read_register_byte(GTOSRegisterMap::REG_IFR_FLAGS);
+    
+    // 2. RETRIEVE PENDING KEYBOARD CHARACTERS OUT OF MODULATOR DISK PATHS
+    // We query the executive's system ingest logs where Instrument ID 0x01 streams append data
+    let mut keyboard_read_buffer = [0u8; 1];
+    let bytes_read = executive.system_read_file_buffer(0x01, &mut keyboard_read_buffer);
+
+    if bytes_read > 0 {
+        let active_char = keyboard_read_buffer[0];
+
+        if active_char == b'\n' || active_char == b'\r' {
+            // Enter Key: Lock the static slice and fire the command parser
+            if TYPING_LENGTH > 0 {
+                execute_functional_cli_parse(&MAIN_TYPING_BUFFER[0..TYPING_LENGTH]);
+                
+                // Erase typing tracking buffers safely while protecting stack boundaries
+                TYPING_LENGTH = 0;
+                for i in 0..256 { MAIN_TYPING_BUFFER[i] = 0; }
+            }
+        } else if active_char == 0x08 {
+            // Backspace Key: Drop index safely to clean up characters
+            if TYPING_LENGTH > 0 {
+                TYPING_LENGTH -= 1;
+                MAIN_TYPING_BUFFER[TYPING_LENGTH] = 0;
+            }
+        } else if TYPING_LENGTH < 256 {
+            // Valid Character: Save straight into the persistent 256-byte static stack array
+            MAIN_TYPING_BUFFER[TYPING_LENGTH] = active_char;
+            TYPING_LENGTH += 1;
+        }
+    }
+}
+
+
 // =========================================================================
 // ENTRY TRACKS: EMBEDDED HANDOVER FOR LONG-MODE BOOT
 // =========================================================================
