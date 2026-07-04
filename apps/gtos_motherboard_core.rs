@@ -2,6 +2,8 @@
 // GTOS Phase 10.5 Primary Motherboard Chipset & Bus Discovery Instrument
 // Status: APPROVED TIER I HARDWARE BOUNDARY GATE (COMPILABLE EXCLUSIVELY FOR EMBEDDED TARGET/SHELL)
 
+#![no_std]
+
 use crate::gtos_hal_ai_compute::{GTOSHALAIComputeDriver};
 use crate::gtos_kernel_main::{GTOSKernelCoreExecutive};
 use crate::gtos_hal_mmu::{GTOSHalMMU};

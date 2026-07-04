@@ -55,28 +55,14 @@ path = "tests/gtos_layer5_harness.rs"
 harness = false
 
 # =========================================================================
-# CONDUCTOR AND MODULATOR SPECIAL CASE HARNESS AND TESTING EXCEPTION
-# =========================================================================
-
-[[test]]
-name = "gtos-conductor-utility"
-path = "tests/gtos_conductor_harness.rs"
-harness = false
-
-[[bin]]
-name = "gtos-modulator-utility"
-path = "tests/gtos_modulator_harness.rs"
-Test = false
-
-# =========================================================================
 # PHASE 10 TARGET V1 CORE SYSTEMS (THE SCORE)
 # =========================================================================
 # These define the baseline operational tools to boot the V1 platform.
 # They modulate chaotic inputs into clean, unfragmented 517-byte chords.
 
-[[bin]]
-name = "gtos-modulator-core"
-path = "apps/gtos_modulator_core.rs"
+# [[bin]]
+# name = "gtos-modulator-core"
+# path = "apps/gtos_modulator_core.rs"
 # V1 Core Ingestor: Modulates raw byte streams into unallocated 517-byte chords.
 
 [[bin]]
@@ -109,7 +95,7 @@ test = false
 [[bin]]
 name = "gtos-instrument-vision"
 path = "apps/gtos_instrument_vision.rs"
-Test = false
+test = false
 # Maps VR/Spatial camera coordinates instantly into 24-byte FFI payloads [Instrument 0x05].
 
 [[bin]]

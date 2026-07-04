@@ -2,8 +2,8 @@
 // GTOS Phase 10.7 Conversational Shell Interface Master Target
 // Status: APPROVED PHASE 10.7 UNFRAGMENTED PRODUCTION CANOPY (NO_STD / NO_MAIN)
 
-#![no_std]     //To be removed 
-#![no_main]    //To be removed
+#![no_std]     
+#![no_main]    
 
 extern crate gtos_core;
 
@@ -302,4 +302,50 @@ pub unsafe extern "C" fn initialize_shell_interface() -> ! {
 
         core::hint::spin_loop();
     }
+}
+// =========================================================================
+// PHASE 10.4 BARE-METAL HARDWARE CROSSOVER ENTRY POINT
+// =========================================================================
+
+/// The explicit entry symbol called directly by your assembly bootloader jump
+#[no_mangle]
+pub unsafe extern "C" fn _start() -> ! {
+    // 1. Statically initialize the unified master system context on the stack
+    let mut conductor = gtos_conductor::GTOSMonolithicHarness::initialize_system();
+
+    // 2. Bind the low-level MMU address layouts (0x8000 - 0xB000)
+    let _ = conductor.bind_hardware_memory();
+
+    // 3. Establish our direct VGA terminal video window anchor (0xB8000)
+    let vga_buffer = 0xB8000 as *mut u16;
+
+    // Overwrite the bootloader's check token with a bright green 'GT'
+unsafe {
+    *vga_buffer.add(0) = 0x0A47; // Bright Green 'G' (0x47) with Color Attribute (0x0A)
+    *vga_buffer.add(1) = 0x0A54; // Bright Green 'T' (0x54) with Color Attribute (0x0A)
+}
+
+    // 4. Fall straight into the master, non-divergent processing cycle
+    loop {
+        let peripheral_signal: [u8; 0] = [];
+        conductor.execute_system_tick(&peripheral_signal);
+    }
+}
+
+// =========================================================================
+// PANIC CORES: TARGET DISTRIBUTION FOR HOOD AND METAL SILICON
+// =========================================================================
+// 1. The Real Bare-Metal Production Cage (hp EliteBook 8440P)
+#[cfg(target_os = "none")]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    // If a physical hardware boundary is crossed, freeze the CPU lines instantly
+    loop {}
+}
+
+// 2. The Local Dev Mixing Surface (Mac Air Host Monitoring)
+#[cfg(all(not(target_os = "none"), not(test)))]
+#[panic_handler]
+fn panic_dev(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }
