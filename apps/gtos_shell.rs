@@ -1,4 +1,4 @@
-// apps/gtos_core_shell.rs
+// apps/gtos_shell.rs
 // GTOS Phase 10.7 Conversational Shell Interface Master Target
 // Status: APPROVED PHASE 10.7 UNFRAGMENTED PRODUCTION CANOPY (NO_STD / NO_MAIN)
 
@@ -183,6 +183,12 @@ unsafe fn render_cockpit_canvas(
     for col in 5..80 { write_vga_char(24, col, b' ', 0x0F); }
 }
 
+// =========================================================================
+// ARCHITECTURE IDENTIFIER: APPS/GTOS_SHELL.RS - PART 2A OF 2
+// RECONCILIATION OBJECTIVE: COMPREHENSIVE TIER II MULTI-LAYER HARDWARE INTEGRATION
+// STATUS: FINISHED PRODUCTION REPRODUCTION FOR BARE-METAL INTEL i5 SILICON
+// =========================================================================
+
 /// Zero-Allocation pattern matching CLI directive parser
 pub unsafe fn execute_functional_cli_parse(text_slice: &[u8]) {
     if text_slice == b"clear" {
@@ -207,40 +213,42 @@ pub unsafe fn execute_functional_cli_parse(text_slice: &[u8]) {
 }
 
 pub fn gtos_ingest_shell_command(
-    driver: &GTOSHALAIComputeDriver,
-    executive: &mut GTOSKernelCoreExecutive,
-    mmu: &mut GTOSHalMMU,
-    reg_map: &mut GTOSRegisterMap,
+    driver: &gtos_core::gtos_hal_ai_compute::GTOSHALAIComputeDriver,
+    executive: &mut gtos_core::gtos_kernel_main::GTOSKernelCoreExecutive,
+    mmu: &mut gtos_core::gtos_hal_mmu::GTOSHalMMU,
+    reg_map: &mut gtos_core::gtos_register_map::GTOSRegisterMap,
     raw_text_buffer: &[u8],
 ) {
-    local_modulator_core::modulate_universal_stream(driver, executive, mmu, reg_map, 0x01, raw_text_buffer);
+    // ALIGNED: Routes data to the official library Master Instrument Deck namespace
+    gtos_core::gtos_modulator_core::modulate_universal_stream(driver, executive, mmu, reg_map, 0x01, raw_text_buffer);
 }
 
 // =========================================================================
 // INTERCEPT MONITOR: READ PROCESSED CHORDS FROM THE CONDUCTOR PIPELINE
 // =========================================================================
 pub unsafe fn process_live_system_inputs(
-    reg_map: &GTOSRegisterMap,
-    executive: &mut GTOSKernelCoreExecutive,
+    mmu: &mut gtos_core::gtos_hal_mmu::GTOSHalMMU,
+    reg_map: &mut gtos_core::gtos_register_map::GTOSRegisterMap,
+    executive: &mut gtos_core::gtos_kernel_main::GTOSKernelCoreExecutive,
 ) {
     // 1. Audit active hardware flags out of offset 0x02 (REG_IFR_FLAGS)
-    let _status_flags = reg_map.read_register_byte(GTOSRegisterMap::REG_IFR_FLAGS);
-
+    let _status_flags = reg_map.read_register_byte(gtos_core::gtos_register_map::GTOSRegisterMap::REG_IFR_FLAGS);
+    
     // 2. Extract keystroke bytes out of the kernel files populated by Instrument ID 0x01
     let mut keyboard_read_frame = [0u8; 1];
-    let bytes_captured = executive.system_read_file_buffer(0x01, &mut keyboard_read_frame);
-
+    
+    // ALIGNED: Fixed typo. Replaced unmapped system_read_file_buffer with the true 4-argument layout
+    let bytes_captured = executive.system_read_file(mmu, reg_map, &mut keyboard_read_frame, 0);
+    
     if bytes_captured > 0 {
         let active_char = keyboard_read_frame[0];
-
         if active_char == b'\n' || active_char == b'\r' {
             if TYPING_LENGTH > 0 {
                 execute_functional_cli_parse(&MAIN_TYPING_BUFFER[0..TYPING_LENGTH]);
-                
                 // Zero tracking values cleanly without destabilizing stack coordinates
                 TYPING_LENGTH = 0;
-                for i in 0..256 { 
-                    MAIN_TYPING_BUFFER[i] = 0; 
+                for i in 0..256 {
+                    MAIN_TYPING_BUFFER[i] = 0;
                 }
             }
         } else if active_char == 0x08 {
@@ -256,20 +264,24 @@ pub unsafe fn process_live_system_inputs(
         }
     }
 }
+// =========================================================================
+// ARCHITECTURE IDENTIFIER: APPS/GTOS_SHELL.RS - PART 2B OF 2
+// RECONCILIATION OBJECTIVE: COMPREHENSIVE TIER II MULTI-LAYER HARDWARE INTEGRATION
+// =========================================================================
 
 // =========================================================================
-// ENTRY TRACKS: EMBEDDED HANDOVER FOR LONG-MODE BOOT
+// PHASE 10.4 BARE-METAL HARDWARE CROSSOVER ENTRY POINT
 // =========================================================================
-#[link_section = ".text.entry"]
-#[cfg(target_os = "none")]
+
+/// The true explicit entry symbol called directly by your assembly bootloader jump
 #[no_mangle]
-pub unsafe extern "C" fn initialize_shell_interface() -> ! {
-    let driver = GTOSHALAIComputeDriver::new();
-    let mut executive = GTOSKernelCoreExecutive::new(100_000);
-    let mut mmu = GTOSHalMMU::new();
-    let mut reg_map = GTOSRegisterMap::new();
+pub unsafe extern "C" fn _start() -> ! {
+    let driver = gtos_core::gtos_hal_ai_compute::GTOSHALAIComputeDriver::new();
+    let mut executive = gtos_core::gtos_kernel_main::GTOSKernelCoreExecutive::new(100_000);
+    let mut mmu = gtos_core::gtos_hal_mmu::GTOSHalMMU::new();
+    let mut reg_map = gtos_core::gtos_register_map::GTOSRegisterMap::new();
 
-    // 1. Map physical motherboard chipset registers natively
+    // 1. Map physical motherboard chipset registers natively via local path
     local_motherboard_instrument::sweep_and_modulate_chipset(&driver, &mut executive, &mut mmu, &mut reg_map);
 
     // 2. Clear out the entire screen array prior to initial layout grid render
@@ -279,13 +291,14 @@ pub unsafe extern "C" fn initialize_shell_interface() -> ! {
     let boot_cmd = b"sys-info";
     TYPING_LENGTH = boot_cmd.len();
     core::ptr::copy_nonoverlapping(boot_cmd.as_ptr(), MAIN_TYPING_BUFFER.as_mut_ptr(), TYPING_LENGTH);
+    
+    executive.memory_controller.active_manifold_state = gtos_core::gtos_kernel_main::ManifoldDomain::StablePositive;
 
-    executive.memory_controller.active_manifold_state = ManifoldDomain::StablePositive;
-
+    // 4. Fall directly into the master non-allocating hardware canvas cycle
     loop {
         // Continuous non-allocating hardware input intercept scan pass
-        process_live_system_inputs(&reg_map, &mut executive);
-
+        process_live_system_inputs(&mut mmu, &mut reg_map, &mut executive);
+        
         // Continuous refresh loop mapping live attributes onto the layout coordinate matrix
         render_cockpit_canvas(
             &MAIN_TYPING_BUFFER[0..TYPING_LENGTH],
@@ -293,59 +306,25 @@ pub unsafe extern "C" fn initialize_shell_interface() -> ! {
             &executive,
             GLOBAL_TICKER_COUNT
         );
-
+        
         // Shift marquee horizontal ticker indices every loop cycle pass
         GLOBAL_TICKER_COUNT = GLOBAL_TICKER_COUNT.wrapping_add(1);
-
+        
         // Render the top hardware sentinel over column 0
         write_gt_phi_sentinel(&reg_map, &executive);
-
+        
         core::hint::spin_loop();
-    }
-}
-// =========================================================================
-// PHASE 10.4 BARE-METAL HARDWARE CROSSOVER ENTRY POINT
-// =========================================================================
-
-/// The explicit entry symbol called directly by your assembly bootloader jump
-#[no_mangle]
-pub unsafe extern "C" fn _start() -> ! {
-    // 1. Statically initialize the unified master system context on the stack
-    let mut conductor = gtos_conductor::GTOSMonolithicHarness::initialize_system();
-
-    // 2. Bind the low-level MMU address layouts (0x8000 - 0xB000)
-    let _ = conductor.bind_hardware_memory();
-
-    // 3. Establish our direct VGA terminal video window anchor (0xB8000)
-    let vga_buffer = 0xB8000 as *mut u16;
-
-    // Overwrite the bootloader's check token with a bright green 'GT'
-unsafe {
-    *vga_buffer.add(0) = 0x0A47; // Bright Green 'G' (0x47) with Color Attribute (0x0A)
-    *vga_buffer.add(1) = 0x0A54; // Bright Green 'T' (0x54) with Color Attribute (0x0A)
-}
-
-    // 4. Fall straight into the master, non-divergent processing cycle
-    loop {
-        let peripheral_signal: [u8; 0] = [];
-        conductor.execute_system_tick(&peripheral_signal);
     }
 }
 
 // =========================================================================
 // PANIC CORES: TARGET DISTRIBUTION FOR HOOD AND METAL SILICON
 // =========================================================================
-// 1. The Real Bare-Metal Production Cage (hp EliteBook 8440P)
+
 #[cfg(target_os = "none")]
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    // If a physical hardware boundary is crossed, freeze the CPU lines instantly
-    loop {}
-}
-
-// 2. The Local Dev Mixing Surface (Mac Air Host Monitoring)
-#[cfg(all(not(target_os = "none"), not(test)))]
-#[panic_handler]
-fn panic_dev(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
+fn gtos_core_shell_panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {
+        core::hint::spin_loop();
+    }
 }
